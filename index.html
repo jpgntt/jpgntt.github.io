@@ -60,7 +60,8 @@
     device-orientation-permission-ui="enabled: true">
 
     <a-assets id="assets" timeout="20000">
-      <!-- Assets serão carregados dinamicamente -->
+      <!-- Primeiro frame: deixa algo pronto na tela enquanto pré-carrega -->
+      <img id="firstFrame" src="assets/Anim1/anim1_0001.png" crossorigin="anonymous"/>
     </a-assets>
 
     <a-camera position="0 0 0"
@@ -69,174 +70,42 @@
               raycaster="objects: .btn; far: 20;"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0" id="anchor">
-      <!-- Elementos serão criados dinamicamente com base na configuração -->
+      <!-- a-image é conveniente; vamos trocar material.src por IDs de assets -->
+      <!-- IMPORTANTE: class="clickthrough" remove este elemento da detecção do raycaster -->
+      <a-image id="sprite"
+               src="#firstFrame"
+               position="0 0 0"
+               material="transparent: true; alphaTest: 0.01; side: double; opacity: 1"
+               width="1.2" height="1.2"
+               visible="false"
+               class="clickthrough">
+      </a-image>
+
+      <!-- Botões com position Z maior (0.1) para ficarem na frente do sprite (0) -->
+      <a-entity id="buttons" visible="false" position="0 0.05 0.1" rotation="0 0 0">
+        <!-- BOTÕES ORIGINAIS -->
+        <a-plane id="btn-original-1" class="btn" position="0.5 0.2 0.1" width="0.4" height="0.15" color="#222" opacity="0.9"
+                 hover-color="over:#444; out:#222"
+                 click-open-url="url:https://randobando.tv/">
+          <a-text value="randobando.tv" align="center" width="1.2" position="0 0 0.01"></a-text>
+        </a-plane>
+
+        <a-plane id="btn-original-2" class="btn" position="0.5 0 0.1" width="0.4" height="0.15" color="#222" opacity="0.9"
+                 hover-color="over:#444; out:#222"
+                 click-open-url="url:https://www.instagram.com/randobando.tv/">
+          <a-text value="instagram" align="center" width="1.2" position="0 0 0.01"></a-text>
+        </a-plane>
+
+        <a-plane id="btn-original-3" class="btn" position="0.5 -0.2 0.1" width="0.4" height="0.15" color="#222" opacity="0.9"
+                 hover-color="over:#444; out:#222"
+                 click-open-url="url:https://www.behance.net/randobando">
+          <a-text value="behance" align="center" width="1.2" position="0 0 0.01"></a-text>
+        </a-plane>
+      </a-entity>
     </a-entity>
   </a-scene>
 
   <script>
-    // ╔══════════════════════════════════════════════════════════════════════════╗
-    // ║                     🎨 SEÇÃO DE CONFIGURAÇÃO                             ║
-    // ║                                                                          ║
-    // ║  Aqui você pode ajustar todos os elementos da cena AR de forma simples   ║
-    // ║  e organizada. Modifique os valores abaixo para personalizar:           ║
-    // ║  - Posição, tamanho e rotação dos elementos                             ║
-    // ║  - Sequências de animação (pasta, frames, FPS)                          ║
-    // ║  - Botões (texto, cor, URL, posição)                                    ║
-    // ╚══════════════════════════════════════════════════════════════════════════╝
-
-    const CONFIG = {
-      // ===== SPRITE / IMAGEM PRINCIPAL =====
-      sprite: {
-        position: { x: 0, y: 0, z: 0 },          // Posição no espaço 3D
-        rotation: { x: 0, y: 0, z: 0 },          // Rotação em graus
-        scale: { width: 1.2, height: 1.2 },      // Tamanho (largura x altura)
-        material: {
-          transparent: true,
-          alphaTest: 0.01,
-          side: 'double',
-          opacity: 1
-        },
-        // Animações de movimento do sprite (opcional)
-        motionAnimations: [
-          // Exemplo: Mover para frente e para trás continuamente
-          {
-            property: 'position',
-            from: { x: 0, y: 0, z: 0 },       // Posição inicial (no alvo)
-            to: { x: -1, y: -0.6, z: 0 },      // Move ligeiramente para trás
-            duration: 1500,                   // Duração de 1.5 segundos para ir
-            easing: 'easeInOutQuad',          // Suaviza o início e o fim
-            delay: 0,
-            loop: true,                       // Repete continuamente
-            dir: 'alternate',                 // Alterna a direção (vai e volta)
-            trigger: 'onKeepAlive'            // Inicia quando o keep alive aparece
-          }
-        ]
-      },
-
-      // ===== ANIMAÇÕES =====
-      animations: {
-        // Primeira animação (toque para iniciar)
-        anim1: {
-          name: 'anim1',
-          folder: 'assets/Anim1',
-          pattern: i => `anim1_${String(i).padStart(4,'0')}.png`,
-          start: 1,
-          end: 6,
-          fps: 10,
-          loop: false
-        },
-        // Animação de "keep alive" (loop contínuo)
-        keepAlive: {
-          name: 'keep',
-          folder: 'assets/Keepalive',
-          pattern: i => `keep_${String(i).padStart(4,'0')}.png`,
-          start: 1,
-          end: 6,
-          fps: 6,
-          loop: true
-        }
-      },
-
-      // ===== CONTAINER DE BOTÕES =====
-      buttonsContainer: {
-        position: { x: 0, y: 0.05, z: 0.1 },     // Posição do grupo de botões
-        rotation: { x: 0, y: 0, z: 0 },          // Rotação do grupo
-        // Animações de movimento do container de botões (opcional)
-        motionAnimations: [
-          // Exemplo: Botões aparecem de baixo para cima
-          // {
-          //   property: 'position',
-          //   from: { x: 0, y: -0.3, z: 0.1 },
-          //   to: { x: 0, y: 0.05, z: 0.1 },
-          //   duration: 800,
-          //   easing: 'easeOutBack',
-          //   delay: 0,
-          //   loop: false,
-          //   trigger: 'onKeepAlive'
-          // }
-        ]
-      },
-
-      // ===== BOTÕES INDIVIDUAIS =====
-      buttons: [
-        {
-          id: 'btn-1',
-          text: 'randobando.tv',
-          url: 'https://randobando.tv/',
-          position: { x: -0.5, y: 0, z: 0 },
-          size: { width: 0.4, height: 0.15 },
-          colors: {
-            default: '#222',
-            hover: '#444'
-          },
-          textStyle: {
-            align: 'center',
-            width: 1.2,
-            position: { x: 0, y: 0, z: 0.01 }
-          },
-          opacity: 0.9,
-          // Animações de movimento individuais do botão (opcional)
-          motionAnimations: [
-            // Exemplo: Botão pulsa ao aparecer
-            // {
-            //   property: 'scale',
-            //   from: { x: 0.5, y: 0.5, z: 1 },
-            //   to: { x: 1, y: 1, z: 1 },
-            //   duration: 400,
-            //   easing: 'easeOutElastic',
-            //   delay: 0,
-            //   loop: false,
-            //   trigger: 'onKeepAlive'
-            // }
-          ]
-        },
-        {
-          id: 'btn-2',
-          text: 'instagram',
-          url: 'https://www.instagram.com/randobando.tv/',
-          position: { x: 0, y: 0, z: 0 },
-          size: { width: 0.4, height: 0.15 },
-          colors: {
-            default: '#222',
-            hover: '#444'
-          },
-          textStyle: {
-            align: 'center',
-            width: 1.2,
-            position: { x: 0, y: 0, z: 0.01 }
-          },
-          opacity: 0.9,
-          motionAnimations: []
-        },
-        {
-          id: 'btn-3',
-          text: 'behance',
-          url: 'https://www.behance.net/randobando',
-          position: { x: 0.5, y: 0, z: 0 },
-          size: { width: 0.4, height: 0.15 },
-          colors: {
-            default: '#222',
-            hover: '#444'
-          },
-          textStyle: {
-            align: 'center',
-            width: 1.2,
-            position: { x: 0, y: 0, z: 0.01 }
-          },
-          opacity: 0.9,
-          motionAnimations: []
-        }
-      ]
-    };
-
-    // ╔══════════════════════════════════════════════════════════════════════════╗
-    // ║                     🔧 CÓDIGO DE FUNCIONAMENTO                           ║
-    // ║                                                                          ║
-    // ║  Daqui para baixo é o código que faz tudo funcionar.                    ║
-    // ║  Você não precisa modificar nada aqui, a menos que queira adicionar     ║
-    // ║  funcionalidades avançadas.                                             ║
-    // ╚══════════════════════════════════════════════════════════════════════════╝
-
     // ===== Helpers de UI/Debug =====
     const log = (...args)=>{ console.log(...args); addPanel(args.map(String).join(' ')); }
     const panel = document.getElementById('panel');
@@ -249,112 +118,27 @@
     });
     function addPanel(s){ panel.textContent += s + "\n"; }
 
-    // ===== Variáveis Globais =====
+    // ===== Sequências (vamos usar IDs dentro do <a-assets>) =====
+    const ANIM1 = {
+      name: 'anim1', folder: 'assets/Anim1',
+      pattern: i => `anim1_${String(i).padStart(4,'0')}.png`,
+      start: 1, end: 6, fps: 10, ids: []
+    };
+    const KEEP = {
+      name: 'keep', folder: 'assets/Keepalive',
+      pattern: i => `keep_${String(i).padStart(4,'0')}.png`,
+      start: 1, end: 6, fps: 6, loop: true, ids: []
+    };
+
     const assetsEl = document.getElementById('assets');
-    const anchor = document.getElementById('anchor');
+    const sprite = document.getElementById('sprite');
+    const buttons = document.getElementById('buttons');
     const startBtn = document.getElementById('startBtn');
-    
-    let sprite, buttonsContainer;
+    const anchor = document.getElementById('anchor');
+
     let detected = false, playing = false, keepAlive = false;
     let timerId = null, currentFrame = 1, currentCfg = null;
 
-    // Adicionar IDs vazios para as animações
-    CONFIG.animations.anim1.ids = [];
-    CONFIG.animations.keepAlive.ids = [];
-
-    // ===== Função para criar elementos dinamicamente =====
-    function createSceneElements() {
-      // Criar sprite
-      sprite = document.createElement('a-image');
-      sprite.setAttribute('id', 'sprite');
-      sprite.setAttribute('position', `${CONFIG.sprite.position.x} ${CONFIG.sprite.position.y} ${CONFIG.sprite.position.z}`);
-      sprite.setAttribute('rotation', `${CONFIG.sprite.rotation.x} ${CONFIG.sprite.rotation.y} ${CONFIG.sprite.rotation.z}`);
-      sprite.setAttribute('width', CONFIG.sprite.scale.width);
-      sprite.setAttribute('height', CONFIG.sprite.scale.height);
-      sprite.setAttribute('material', `transparent: ${CONFIG.sprite.material.transparent}; alphaTest: ${CONFIG.sprite.material.alphaTest}; side: ${CONFIG.sprite.material.side}; opacity: ${CONFIG.sprite.material.opacity}`);
-      sprite.setAttribute('visible', 'false');
-      sprite.setAttribute('class', 'clickthrough');
-      anchor.appendChild(sprite);
-
-      // Criar container de botões
-      buttonsContainer = document.createElement('a-entity');
-      buttonsContainer.setAttribute('id', 'buttons');
-      buttonsContainer.setAttribute('position', `${CONFIG.buttonsContainer.position.x} ${CONFIG.buttonsContainer.position.y} ${CONFIG.buttonsContainer.position.z}`);
-      buttonsContainer.setAttribute('rotation', `${CONFIG.buttonsContainer.rotation.x} ${CONFIG.buttonsContainer.rotation.y} ${CONFIG.buttonsContainer.rotation.z}`);
-      buttonsContainer.setAttribute('visible', 'false');
-      anchor.appendChild(buttonsContainer);
-
-      // Criar botões
-      CONFIG.buttons.forEach(btnCfg => {
-        const btn = document.createElement('a-plane');
-        btn.setAttribute('id', btnCfg.id);
-        btn.setAttribute('class', 'btn');
-        btn.setAttribute('position', `${btnCfg.position.x} ${btnCfg.position.y} ${btnCfg.position.z}`);
-        btn.setAttribute('width', btnCfg.size.width);
-        btn.setAttribute('height', btnCfg.size.height);
-        btn.setAttribute('color', btnCfg.colors.default);
-        btn.setAttribute('opacity', btnCfg.opacity);
-        btn.setAttribute('hover-color', `over:${btnCfg.colors.hover}; out:${btnCfg.colors.default}`);
-        btn.setAttribute('click-open-url', `url:${btnCfg.url}`);
-
-        // Criar texto do botão
-        const text = document.createElement('a-text');
-        text.setAttribute('value', btnCfg.text);
-        text.setAttribute('align', btnCfg.textStyle.align);
-        text.setAttribute('width', btnCfg.textStyle.width);
-        text.setAttribute('position', `${btnCfg.textStyle.position.x} ${btnCfg.textStyle.position.y} ${btnCfg.textStyle.position.z}`);
-        btn.appendChild(text);
-
-        buttonsContainer.appendChild(btn);
-      });
-
-      log('Elementos da cena criados dinamicamente com base na configuração');
-    }
-
-    // ===== Função para aplicar animações de movimento =====
-    function applyMotionAnimations(element, animations, trigger) {
-      if (!animations || animations.length === 0) return;
-      
-      animations.forEach((anim, index) => {
-        if (anim.trigger !== trigger) return;
-        
-        const animId = `motion-anim-${Date.now()}-${index}`;
-        const property = anim.property; // 'position', 'rotation', 'scale'
-        const from = anim.from;
-        const to = anim.to;
-        const duration = anim.duration || 1000;
-        const easing = anim.easing || 'linear';
-        const delay = anim.delay || 1;
-        const loop = anim.loop || false;
-        
-        // Se tem valor 'from', definir antes de animar
-        if (from) {
-          if (property === 'position') {
-            element.setAttribute('position', `${from.x} ${from.y} ${from.z}`);
-          } else if (property === 'rotation') {
-            element.setAttribute('rotation', `${from.x} ${from.y} ${from.z}`);
-          } else if (property === 'scale') {
-            element.setAttribute('scale', `${from.x} ${from.y} ${from.z}`);
-          }
-        }
-        
-        // Aplicar animação
-        setTimeout(() => {
-          const animConfig = {
-            property: property,
-            to: to,
-            dur: duration,
-            easing: easing,
-            loop: loop
-          };
-          
-          element.setAttribute(`animation__${animId}`, animConfig);
-          log(`[Motion] Animação aplicada: ${property} em ${element.id || element.tagName}`);
-        }, delay);
-      });
-    }
-
-    // ===== Funções de gerenciamento de assets =====
     function ensureAssetImg(id, src){
       let el = document.getElementById(id);
       if (!el){
@@ -390,6 +174,7 @@
 
     function setSpriteById(assetId){
       const ref = `#${assetId}`;
+      // definir nos dois lugares para forçar atualização do material
       sprite.setAttribute('src', ref);
       sprite.setAttribute('material', 'src', ref);
     }
@@ -405,7 +190,7 @@
       const interval = 1000 / (cfg.fps || 10);
 
       const step = () => {
-        const idx = currentFrame - cfg.start;
+        const idx = currentFrame - cfg.start;               // 0-based
         const assetId = cfg.ids[idx];
         if (assetId){ setSpriteById(assetId); }
         currentFrame++;
@@ -424,87 +209,57 @@
       playing = true;
       startBtn.style.display = 'none';
 
-      // Garantir assets carregados
-      await preloadSequence(CONFIG.animations.anim1);
-      await preloadSequence(CONFIG.animations.keepAlive);
+      // garante assets carregados
+      await preloadSequence(ANIM1);
+      await preloadSequence(KEEP);
 
       sprite.setAttribute('visible', 'true');
-      
-      // Aplicar animações de movimento com trigger 'onAnimationStart'
-      applyMotionAnimations(sprite, CONFIG.sprite.motionAnimations, 'onAnimationStart');
 
-      playSequence(CONFIG.animations.anim1, () => {
+      playSequence(ANIM1, () => {
         keepAlive = true; playing = false;
-        playSequence(CONFIG.animations.keepAlive);
-        buttonsContainer.setAttribute('visible', 'true');
+        playSequence(KEEP);
+        buttons.setAttribute('visible', 'true');
         log('Botões agora visíveis!');
-        
-        // Aplicar animações de movimento com trigger 'onKeepAlive'
-        applyMotionAnimations(sprite, CONFIG.sprite.motionAnimations, 'onKeepAlive');
-        applyMotionAnimations(buttonsContainer, CONFIG.buttonsContainer.motionAnimations, 'onKeepAlive');
-        
-        // Aplicar animações individuais aos botões
-        CONFIG.buttons.forEach((btnCfg, index) => {
-          const btnElement = document.getElementById(btnCfg.id);
-          if (btnElement && btnCfg.motionAnimations) {
-            applyMotionAnimations(btnElement, btnCfg.motionAnimations, 'onKeepAlive');
-          }
-        });
       });
     }
 
-    // ===== Eventos MindAR =====
+    // Eventos MindAR
     anchor.addEventListener('targetFound', () => {
       detected = true;
       statusEl.textContent = 'Alvo detectado — toque em "Iniciar animação".';
-      sprite.setAttribute('visible', 'true');
-      buttonsContainer.setAttribute('visible', 'false');
+      sprite.setAttribute('visible', 'true');   // mostra o primeiro frame
+      buttons.setAttribute('visible', 'false');
       keepAlive = false; playing = false;
-      startBtn.style.display = 'inline-block';
-      
-      // Aplicar animações de movimento com trigger 'onTargetFound'
-      applyMotionAnimations(sprite, CONFIG.sprite.motionAnimations, 'onTargetFound');
+      startBtn.style.display = 'inline-block';  // mostra botão de início
     });
 
     anchor.addEventListener('targetLost', () => {
       detected = false;
       statusEl.textContent = 'Procurando alvo...';
       sprite.setAttribute('visible', 'false');
-      buttonsContainer.setAttribute('visible', 'false');
+      buttons.setAttribute('visible', 'false');
       startBtn.style.display = 'none';
       stopSequence();
       keepAlive = false; playing = false;
     });
 
-    // ===== Inicialização =====
+    // Clique no botão (gesto explícito do usuário)
     startBtn.addEventListener('click', startAnimationFlow);
 
+    // Fallback: tap no canvas também inicia
     const scene = document.querySelector('a-scene');
     scene.addEventListener('loaded', () => {
-      // Criar elementos da cena
-      createSceneElements();
-
-      // Pré-carregar primeiro frame
-      const firstFrameId = `${CONFIG.animations.anim1.name}_${String(CONFIG.animations.anim1.start).padStart(4,'0')}`;
-      const firstFrameSrc = `${CONFIG.animations.anim1.folder}/${CONFIG.animations.anim1.pattern(CONFIG.animations.anim1.start)}`;
-      ensureAssetImg(firstFrameId, firstFrameSrc);
-      setSpriteById(firstFrameId);
-
-      // Tap no canvas também inicia
       const cv = scene.canvas;
       if (cv){
         ['pointerdown','touchstart','click'].forEach(ev=>{
           cv.addEventListener(ev, () => startAnimationFlow(), {passive:true});
         });
-        log('Tap handlers no canvas prontos');
+        log('Tap handlers no canvas prontos (pointerdown/touchstart/click)');
       }
       statusEl.textContent = 'Aponte para o alvo';
-
-      // Iniciar sistema de detecção manual de cliques
-      setupManualClickDetection();
     });
 
-    // ===== Componentes A-Frame =====
+    // Componentes de botão 3D
     AFRAME.registerComponent('click-open-url', {
       schema: { url: {type: 'string'} },
       init(){
@@ -526,11 +281,19 @@
       }
     });
 
-    // ===== Sistema de Detecção Manual de Cliques =====
+    // ===== SISTEMA DE DETECÇÃO MANUAL DE CLIQUES =====
+    // Como o raycaster do A-Frame não está funcionando com MindAR, vamos usar Three.js diretamente
+    
     let manualRaycaster = null;
     let mouse = new THREE.Vector2();
     
     function setupManualClickDetection() {
+      const scene = document.querySelector('a-scene');
+      if (!scene || !scene.hasLoaded) {
+        setTimeout(setupManualClickDetection, 500);
+        return;
+      }
+      
       const sceneEl = scene;
       const camera = sceneEl.camera;
       const canvas = sceneEl.canvas;
@@ -544,7 +307,9 @@
       manualRaycaster = new THREE.Raycaster();
       log('[Manual Click] Sistema de detecção manual inicializado');
       
+      // Função para processar clique/toque
       function handleInteraction(event) {
+        // Obter coordenadas normalizadas do clique/toque
         let clientX, clientY;
         if (event.touches && event.touches.length > 0) {
           clientX = event.touches[0].clientX;
@@ -561,8 +326,10 @@
         mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
         
+        // Configurar raycaster
         manualRaycaster.setFromCamera(mouse, camera);
         
+        // Obter todos os objetos 3D dos botões
         const buttonElements = document.querySelectorAll('.btn');
         const buttonMeshes = [];
         
@@ -574,9 +341,11 @@
           }
         });
         
+        // Verificar intersecções
         const intersects = manualRaycaster.intersectObjects(buttonMeshes, true);
         
         if (intersects.length > 0) {
+          // Encontrar o elemento A-Frame correspondente
           let targetEl = null;
           let currentObj = intersects[0].object;
           
@@ -593,8 +362,9 @@
           }
           
           if (targetEl) {
-            log(`[Manual Click] Botão clicado: ${targetEl.id}`);
+            log(`[Manual Click] Botão clicado: ${targetEl.id || 'sem ID'}`);
             
+            // Tentar obter URL do componente A-Frame
             let url = null;
             if (targetEl.components['click-open-url']) {
               url = targetEl.components['click-open-url'].data.url;
@@ -603,6 +373,7 @@
             if (url) {
               log(`[Manual Click] Abrindo URL: ${url}`);
               
+              // Tentar abrir o link
               try {
                 const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
                 if (newWindow) {
@@ -610,6 +381,7 @@
                   log(`[Manual Click] Link aberto com sucesso!`);
                 } else {
                   log(`[Manual Click] window.open bloqueado, tentando método alternativo...`);
+                  // Método alternativo: criar elemento <a> e simular clique
                   const a = document.createElement('a');
                   a.href = url;
                   a.target = '_blank';
@@ -635,12 +407,24 @@
         }
       }
       
+      // Adicionar listeners
       canvas.addEventListener('click', handleInteraction);
       canvas.addEventListener('touchend', handleInteraction);
       
       log('[Manual Click] Listeners adicionados ao canvas');
     }
+    
+    // Iniciar após a cena carregar
+    document.addEventListener('DOMContentLoaded', () => {
+      const scene = document.querySelector('a-scene');
+      if (scene.hasLoaded) {
+        setupManualClickDetection();
+      } else {
+        scene.addEventListener('loaded', setupManualClickDetection);
+      }
+    });
 
+    // Log de erros
     window.addEventListener('error', (e)=>{ log('window error:', e.message); });
   </script>
 </body>
