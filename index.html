@@ -12,16 +12,25 @@
     }
     *{box-sizing:border-box}
     body{
-      margin:0; background:#000; color:var(--txt); font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      margin:0; background:#000; color:var(--txt);
+      font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
       display:grid; grid-template-rows: 1fr 5fr auto; min-height:100svh;
     }
     header, footer{background:var(--bg1); padding:8px var(--gap); display:flex; align-items:center; justify-content:center}
-    main{background:var(--bg2); padding:var(--gap); display:grid; grid-template-columns: 1fr 1fr 1fr; gap:var(--gap);}
+    header{ position:relative; }
     .time{
       font-weight:800; text-align:center; background:var(--bg1); border-radius:16px; padding:8px 12px;
       font-size: clamp(32px, 8vw, 96px); cursor:text;
     }
-    .time.editing{outline:2px dashed var(--accent); background:#161616}
+    /* Editor inline do tempo */
+    .time-input{
+      position:absolute; left:50%; top:18px; transform:translateX(-50%);
+      z-index:5; display:none; width:min(320px, 70vw); text-align:center;
+      font-weight:800; font-size: clamp(28px, 7.5vw, 80px);
+      padding:6px 12px; border-radius:12px; border:2px solid #3c6ac6;
+      background:#161616; color:#eaeaea; outline:none;
+    }
+
     .panel{background:var(--panel); border-radius:16px; padding:16px; display:flex; flex-direction:column; align-items:center}
     .title{opacity:.9; font-weight:700; margin-bottom:8px; font-size: clamp(16px, 2.5vw, 28px)}
     .title[contenteditable="true"]{outline:2px dashed transparent; border-radius:6px; padding:2px 6px; cursor:text}
@@ -41,19 +50,50 @@
     .center .grid.one button{min-height:64px}
     footer{font-size:clamp(11px, 1.6vw, 14px); text-align:center}
     .tips{opacity:.85}
-    @media (max-width: 900px){
-      main{grid-template-columns: 1fr; grid-auto-rows: minmax(0,auto)}
+
+    /* Áreas do grid */
+    .panel.left  { grid-area: left; }
+    .panel.center{ grid-area: center; }
+    .panel.right { grid-area: right; }
+
+    /* Desktop */
+    main{
+      background:var(--bg2);
+      padding:var(--gap);
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-areas: "left center right";
+      gap:var(--gap);
     }
+    /* Mobile */
+    @media (max-width: 900px){
+      main{
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "left  right"
+          "center center";
+      }
+    }
+
+    /* Resultados */
     .results-wrap{ width:100%; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:8px; }
     details.results{ background:#121212; border:1px solid #232323; border-radius:10px; padding:8px 12px; }
     details.results summary{cursor:pointer; font-weight:700}
-    .result-item{ display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap:8px; padding:8px; border-radius:8px; background:#1b1b1b; margin-top:8px; }
+    .result-item{
+      display:grid; grid-template-columns: 1fr auto auto; align-items:center;
+      gap:8px; padding:8px; border-radius:8px; background:#1b1b1b; margin-top:8px;
+    }
     .result-item .meta{opacity:.9; font-size:14px}
     .result-item .actions button{ border-color:#333; padding:8px 12px; font-size:14px; margin-left:6px; }
     .actions .edit{background:#243b55}
     .actions .delete{background:#3a2323}
+
+    /* Modal */
     .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50; }
-    .modal{ width:min(92vw, 560px); background:#1a1a1a; border:1px solid #2b2b2b; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+    .modal{
+      width:min(92vw, 560px); background:#1a1a1a; border:1px solid #2b2b2b; border-radius:14px; padding:16px;
+      display:flex; flex-direction:column; gap:12px;
+    }
     .modal h3{margin:0; font-size:20px}
     .form-row{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
     .input{ background:#111; border:1px solid #333; color:#fff; padding:10px 12px; border-radius:10px; font-size:16px; width:100%; }
@@ -66,7 +106,8 @@
 </head>
 <body>
   <header>
-    <div id="time" class="time" contenteditable="false" spellcheck="false" title="Clique para editar o tempo">15:00</div>
+    <div id="time" class="time" title="Clique para editar o tempo">15:00</div>
+    <input id="timeEdit" class="time-input" type="text" inputmode="numeric" pattern="[0-9:]*" aria-label="Editar tempo (MM:SS ou apenas números)" />
   </header>
 
   <main>
@@ -112,7 +153,7 @@
     </div>
   </footer>
 
-  <!-- Modal de revisão/salvamento -->
+  <!-- Modal -->
   <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
       <h3 id="modalTitle">Revisar e salvar partida</h3>
@@ -149,9 +190,7 @@
 
   <script>
     // ===== CONFIG =====
-    const GAME_DURATION = 15 * 60; // seg
-
-    // >>> SONS (MP3) <<<
+    const GAME_DURATION = 15 * 60; // segundos
     const SOUND_URLS = {
       start: "assets/sounds/start.mp3",
       pause: "assets/sounds/pause.mp3",
@@ -159,11 +198,9 @@
       m5:    "assets/sounds/5min.mp3",
       m1:    "assets/sounds/1min.mp3",
     };
-
-    // (opcional) padrões extras: continuam valendo para outros marcos/últimos 10s
-    const LAST10_PATTERN = 'S'; // 'S' curto por segundo nos últimos 10s
-    // Se quiser manter outros marcos por padrão, pode mapear aqui (não 300/60, pois usam MP3):
+    // Padrões extras (10:00 e 2:00) por síntese; remova se não quiser
     const MILESTONES = { 600:'SS', 120:'SSS' };
+    const LAST10_PATTERN = 'S';
 
     // ===== Estado =====
     let timeLeft = GAME_DURATION;
@@ -172,62 +209,39 @@
     let nameA = 'Equipe A', nameB = 'Equipe B';
     let eventsFired = new Set();
     let nextTick = performance.now() + 1000;
-    let startPending = false; // evita duplo clique enquanto toca "start"
+    let startPending = false;
 
-    // ===== ÁUDIO (WebAudio) =====
+    // ===== ÁUDIO =====
     let audioCtx = null;
-    const buffers = {}; // cache de AudioBuffers por chave (start/pause/end/m5/m1)
+    const buffers = {};
     const beepQueue = [];
     let beeperBusy = false;
 
-    function ensureAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    async function fetchAsBuffer(url){
-      ensureAudio();
-      const res = await fetch(url, {cache:"force-cache"});
-      const arr = await res.arrayBuffer();
-      return await audioCtx.decodeAudioData(arr);
-    }
-    async function loadBuffer(key){
-      if (buffers[key]) return buffers[key];
-      const url = SOUND_URLS[key];
-      if (!url) return null;
-      const buf = await fetchAsBuffer(url);
-      buffers[key] = buf;
-      return buf;
-    }
+    function ensureAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+    async function fetchAsBuffer(url){ ensureAudio(); const res=await fetch(url,{cache:"force-cache"}); const arr=await res.arrayBuffer(); return await audioCtx.decodeAudioData(arr); }
+    async function loadBuffer(key){ if (buffers[key]) return buffers[key]; const url=SOUND_URLS[key]; if (!url) return null; const buf=await fetchAsBuffer(url); buffers[key]=buf; return buf; }
     async function playBufferByKey(key){
       const buf = await loadBuffer(key);
       if (!buf) return 0;
       ensureAudio();
       const src = audioCtx.createBufferSource();
       src.buffer = buf;
-      const gain = audioCtx.createGain();
-      gain.gain.value = 0.95; // volume
+      const gain = audioCtx.createGain(); gain.gain.value = 0.95;
       src.connect(gain).connect(audioCtx.destination);
       src.start();
-      const durMs = buf.duration * 1000;
-      await new Promise(r => setTimeout(r, durMs));
-      return durMs;
+      const ms = buf.duration*1000; await new Promise(r=>setTimeout(r, ms)); return ms;
     }
-
-    // Fallback de síntese para padrões (se quiser manter)
-    const BEEP_SHORT_FREQ = 500, BEEP_LONG_FREQ = 700;
-    const BEEP_SHORT_MS = 500,  BEEP_LONG_MS = 900;
+    // síntese fallback para padrões
+    const BEEP_SHORT_FREQ=500, BEEP_LONG_FREQ=700, BEEP_SHORT_MS=500, BEEP_LONG_MS=900;
     async function playTone(freq, durMs){
       ensureAudio();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durMs/1000);
-      osc.connect(gain).connect(audioCtx.destination);
-      osc.start();
-      await new Promise(r => setTimeout(r, durMs));
-      osc.stop();
+      const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+      osc.type='sine'; osc.frequency.value=freq;
+      g.gain.setValueAtTime(0.001,audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.3,audioCtx.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+durMs/1000);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(); await new Promise(r=>setTimeout(r,durMs)); osc.stop();
     }
     async function playPattern(pattern){
       if (!pattern) return;
@@ -237,23 +251,23 @@
       try{
         while(beepQueue.length){
           const pat = beepQueue.shift();
-          for (let i=0; i<pat.length; i++){
-            const isShort = pat[i].toUpperCase()==='S';
-            await playTone(isShort?BEEP_SHORT_FREQ:BEEP_LONG_FREQ, isShort?BEEP_SHORT_MS:BEEP_LONG_MS);
-            await new Promise(r => setTimeout(r, 120));
+          for (let i=0;i<pat.length;i++){
+            const short = pat[i].toUpperCase()==='S';
+            await playTone(short?BEEP_SHORT_FREQ:BEEP_LONG_FREQ, short?BEEP_SHORT_MS:BEEP_LONG_MS);
+            await new Promise(r=>setTimeout(r,120));
           }
         }
-      } finally { beeperBusy = false; }
+      }finally{ beeperBusy=false; }
     }
 
-    // ===== Helpers =====
+    // ===== Helpers/UI =====
     const $ = sel => document.querySelector(sel);
-    const fmt = sec => {
+    function fmt(sec){
       sec = Math.max(0, Math.floor(sec));
       const m = String(Math.floor(sec/60)).padStart(2,'0');
       const s = String(sec%60).padStart(2,'0');
       return `${m}:${s}`;
-    };
+    }
     function render(){
       $('#time').textContent = fmt(timeLeft);
       $('#scoreA').textContent = String(scoreA);
@@ -267,27 +281,23 @@
         if (typeof e === 'string' && e.startsWith('last10_')) return timeLeft <= 10;
         return true;
       }));
+      // console.log('[EVENTS]', eventsFired);
     }
 
-    // ===== Resultados (localStorage) =====
-    const LS_KEY = 'polo_matches_v1';
-    function loadMatches(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
+    // ===== Resultados =====
+    const LS_KEY='polo_matches_v1';
+    function loadMatches(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch{return[]} }
     function saveMatches(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); }
-    function addMatch(rec){ const l = loadMatches(); l.unshift(rec); saveMatches(l); renderResults(); }
-    function updateMatch(id, patch){
-      const l = loadMatches();
-      const i = l.findIndex(x => x.id === id);
-      if (i>=0){ l[i] = {...l[i], ...patch, edited:true}; saveMatches(l); renderResults(); }
-    }
-    function deleteMatch(id){ saveMatches(loadMatches().filter(x => x.id !== id)); renderResults(); }
+    function addMatch(rec){ const l=loadMatches(); l.unshift(rec); saveMatches(l); renderResults(); }
+    function updateMatch(id,patch){ const l=loadMatches(); const i=l.findIndex(x=>x.id===id); if(i>=0){ l[i]={...l[i],...patch,edited:true}; saveMatches(l); renderResults(); } }
+    function deleteMatch(id){ saveMatches(loadMatches().filter(x=>x.id!==id)); renderResults(); }
     function renderResults(){
-      const list = loadMatches();
-      const c = $('#resultsList'); c.innerHTML = '';
-      if (!list.length){ c.innerHTML = `<div class="small">Nenhum resultado salvo ainda.</div>`; return; }
+      const list=loadMatches(), c=$('#resultsList'); c.innerHTML='';
+      if(!list.length){ c.innerHTML='<div class="small">Nenhum resultado salvo ainda.</div>'; return; }
       list.slice(0,20).forEach(rec=>{
-        const row = document.createElement('div'); row.className='result-item';
-        const when = new Date(rec.timestamp).toLocaleString();
-        row.innerHTML = `
+        const row=document.createElement('div'); row.className='result-item';
+        const when=new Date(rec.timestamp).toLocaleString();
+        row.innerHTML=`
           <div>
             <div><strong>${rec.nameA}</strong> ${rec.scoreA} × ${rec.scoreB} <strong>${rec.nameB}</strong></div>
             <div class="meta">${when}${rec.edited?' • editado':''} • duração: ${fmt(rec.duration)}</div>
@@ -295,161 +305,124 @@
           </div>
           <div class="actions"><button class="edit">Editar</button></div>
           <div class="actions"><button class="delete">Excluir</button></div>`;
-        row.querySelector('.edit').addEventListener('click', ()=>{
-          openModal({id:rec.id, nameA:rec.nameA, nameB:rec.nameB, scoreA:rec.scoreA, scoreB:rec.scoreB, notes:rec.notes||'', duration:rec.duration}, true);
+        row.querySelector('.edit').addEventListener('click',()=>{
+          openModal({id:rec.id,nameA:rec.nameA,nameB:rec.nameB,scoreA:rec.scoreA,scoreB:rec.scoreB,notes:rec.notes||'',duration:rec.duration},true);
         });
-        row.querySelector('.delete').addEventListener('click', ()=>{ if (confirm('Excluir este registro?')) deleteMatch(rec.id); });
+        row.querySelector('.delete').addEventListener('click',()=>{ if(confirm('Excluir este registro?')) deleteMatch(rec.id); });
         c.appendChild(row);
       });
     }
 
     // ===== Modal =====
-    const modal = $('#modalBackdrop');
-    const mNameA = $('#mNameA'), mNameB = $('#mNameB'),
-          mScoreA = $('#mScoreA'), mScoreB = $('#mScoreB'),
-          mNotes = $('#mNotes'), mCancel = $('#mCancel'), mSave = $('#mSave');
-    let editingId = null;
-    let currentDuration = GAME_DURATION;
-    function openModal(data=null, isEditing=false){
-      if (data){
-        editingId = isEditing ? data.id : null;
-        mNameA.value = data.nameA ?? nameA;
-        mNameB.value = data.nameB ?? nameB;
-        mScoreA.value = data.scoreA ?? scoreA;
-        mScoreB.value = data.scoreB ?? scoreB;
-        mNotes.value = data.notes ?? '';
-        currentDuration = data.duration ?? (GAME_DURATION - timeLeft);
-      } else {
-        editingId = null;
-        mNameA.value = nameA; mNameB.value = nameB;
-        mScoreA.value = scoreA; mScoreB.value = scoreB;
-        mNotes.value = '';
-        currentDuration = GAME_DURATION - timeLeft;
+    const modal=$('#modalBackdrop');
+    const mNameA=$('#mNameA'), mNameB=$('#mNameB'), mScoreA=$('#mScoreA'), mScoreB=$('#mScoreB'), mNotes=$('#mNotes'), mCancel=$('#mCancel'), mSave=$('#mSave');
+    let editingId=null; let currentDuration=GAME_DURATION;
+    function openModal(data=null,isEditing=false){
+      if(data){
+        editingId=isEditing?data.id:null;
+        mNameA.value=data.nameA??nameA; mNameB.value=data.nameB??nameB;
+        mScoreA.value=data.scoreA??scoreA; mScoreB.value=data.scoreB??scoreB;
+        mNotes.value=data.notes??''; currentDuration=data.duration??(GAME_DURATION-timeLeft);
+      }else{
+        editingId=null; mNameA.value=nameA; mNameB.value=nameB; mScoreA.value=scoreA; mScoreB.value=scoreB; mNotes.value=''; currentDuration=GAME_DURATION-timeLeft;
       }
-      modal.style.display = 'flex'; mNameA.focus();
+      modal.style.display='flex'; mNameA.focus();
     }
-    function closeModal(){ modal.style.display = 'none'; }
+    function closeModal(){ modal.style.display='none'; }
     mCancel.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e)=>{ if (e.target === modal) closeModal(); });
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
     mSave.addEventListener('click', ()=>{
-      const rec = {
+      const rec={
         id: editingId || crypto.randomUUID(),
         timestamp: Date.now(),
-        nameA: mNameA.value.trim() || 'Equipe A',
-        nameB: mNameB.value.trim() || 'Equipe B',
+        nameA: mNameA.value.trim()||'Equipe A',
+        nameB: mNameB.value.trim()||'Equipe B',
         scoreA: Math.max(0, parseInt(mScoreA.value||'0',10)),
         scoreB: Math.max(0, parseInt(mScoreB.value||'0',10)),
         duration: Math.max(0, parseInt(currentDuration||GAME_DURATION,10)),
         notes: mNotes.value.trim(),
         edited: !!editingId
       };
-      if (editingId) updateMatch(editingId, rec); else addMatch(rec);
+      if(editingId) updateMatch(editingId,rec); else addMatch(rec);
       closeModal();
     });
 
-    // ===== UI Actions =====
-    function changeScore(team, delta){ if (team==='A'){ scoreA=Math.max(0,scoreA+delta);} else {scoreB=Math.max(0,scoreB+delta);} render(); }
+    // ===== Ações =====
+    function changeScore(team,delta){ if(team==='A'){scoreA=Math.max(0,scoreA+delta);} else {scoreB=Math.max(0,scoreB+delta);} render(); }
     function changeTime(delta){ timeLeft=Math.max(0,timeLeft+delta); render(); purgeFutureEvents(); }
-    function jumpTo(sec){ timeLeft=Math.max(0,Math.floor(sec)); render(); purgeFutureEvents(); }
+    function jumpTo(sec){ timeLeft = Math.max(0, Math.floor(sec)); render(); purgeFutureEvents(); } // <- corrigido
 
     async function toggle(){
-      // desbloqueia áudio
       ensureAudio();
-
-      if (running){
-        running = false;
-        // som de pause (não precisa esperar para pausar)
-        playBufferByKey('pause'); // fire-and-forget
-        console.log('[STATE] PAUSADO', fmt(timeLeft));
-        return;
+      if(running){
+        running=false; playBufferByKey('pause'); console.log('[STATE] PAUSADO', fmt(timeLeft)); return;
       }
-
-      if (startPending) return; // já iniciando
-      startPending = true;
-      console.log('[STATE] START PENDING (tocando start)...');
-
-      // toca "start" e só então inicia
-      const dur = await playBufferByKey('start'); // espera terminar
-      running = true;
-      startPending = false;
-      nextTick = performance.now() + 1000;
-      console.log('[STATE] INICIADO', fmt(timeLeft), `(start.mp3 ${Math.round(dur)}ms)`);
+      if(startPending) return;
+      startPending=true; console.log('[STATE] START PENDING…');
+      const dur=await playBufferByKey('start');
+      running=true; startPending=false; nextTick=performance.now()+1000;
+      console.log('[STATE] INICIADO', fmt(timeLeft), `(start.mp3 ~${Math.round(dur)}ms)`);
     }
-
     function reset(){ running=false; timeLeft=GAME_DURATION; eventsFired.clear(); render(); console.log('[RESET] 15:00; eventos limpos.'); }
 
-    // Nomes (contenteditable)
-    $('#nameA').addEventListener('input', e=>{ nameA = e.currentTarget.textContent.trim() || 'Equipe A'; });
-    $('#nameB').addEventListener('input', e=>{ nameB = e.currentTarget.textContent.trim() || 'Equipe B'; });
+    // Nomes
+    $('#nameA').addEventListener('input', e=>{ nameA=e.currentTarget.textContent.trim()||'Equipe A'; });
+    $('#nameB').addEventListener('input', e=>{ nameB=e.currentTarget.textContent.trim()||'Equipe B'; });
 
-    // Editar tempo clicando no relógio
-    const timeEl = $('#time');
-    function enableTimeEdit(){
-      timeEl.classList.add('editing');
-      timeEl.setAttribute('contenteditable','true');
-      const r = document.createRange(), s = window.getSelection();
-      r.selectNodeContents(timeEl); s.removeAllRanges(); s.addRange(r);
-      timeEl.focus();
-    }
+    // ===== Editor de tempo (<input>) =====
+    const timeEl=$('#time'); const timeEdit=$('#timeEdit');
     function parseTimeText(txt){
-      txt = (txt||'').trim();
-      if (/^\d{1,2}:\d{2}$/.test(txt)){ const [m,s]=txt.split(':').map(n=>parseInt(n,10)); if (s<60) return m*60+s; }
-      if (/^\d+$/.test(txt)) return parseInt(txt,10);
-      return null;
+      if(!txt) return null; txt=String(txt).trim();
+      if(txt.includes(':')){ const [mStr,sStr]=txt.split(':'); const m=Math.max(0,parseInt(mStr||'0',10)); const s=Math.max(0,parseInt(sStr||'0',10)); return m*60+s; }
+      const digits=txt.replace(/\D/g,''); if(digits.length===0) return null;
+      if(digits.length<=2) return parseInt(digits,10);
+      const sec=parseInt(digits.slice(-2),10), min=parseInt(digits.slice(0,-2),10); return min*60+sec;
     }
-    function disableTimeEdit(commit){
-      timeEl.classList.remove('editing');
-      timeEl.setAttribute('contenteditable','false');
-      if (commit){
-        const val = parseTimeText(timeEl.textContent);
-        if (val!==null){ timeLeft = Math.max(0, val); purgeFutureEvents(); }
+    function openTimeEditor(){
+      timeEdit.value = fmt(timeLeft);
+      timeEdit.style.display='block';
+      requestAnimationFrame(()=>{ timeEdit.focus(); timeEdit.setSelectionRange(0,timeEdit.value.length); });
+    }
+    function closeTimeEditor(commit){
+      const wasVisible = timeEdit.style.display!=='none';
+      timeEdit.style.display='none';
+      if(commit && wasVisible){
+        const val=parseTimeText(timeEdit.value);
+        if(val!==null){ timeLeft=Math.max(0,val); purgeFutureEvents(); }
+        render();
       }
-      render();
     }
-    timeEl.addEventListener('click', ()=>{ if (timeEl.getAttribute('contenteditable')!=='true') enableTimeEdit(); });
-    timeEl.addEventListener('keydown', (e)=>{ if (e.key==='Enter'){ e.preventDefault(); disableTimeEdit(true);} else if (e.key==='Escape'){ e.preventDefault(); disableTimeEdit(false);} });
-    timeEl.addEventListener('blur', ()=> disableTimeEdit(true));
+    timeEl.addEventListener('click', openTimeEditor);
+    timeEdit.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); closeTimeEditor(true); }
+      else if(e.key==='Escape'){ e.preventDefault(); closeTimeEditor(false); }
+    });
+    timeEdit.addEventListener('blur', ()=> closeTimeEditor(true));
 
-    // ===== Clock Loop =====
+    // ===== Relógio =====
     function clockLoop(){
-      if (running && timeLeft > 0){
-        const now = performance.now();
-        if (now >= nextTick){
-          timeLeft = Math.max(0, timeLeft - 1);
+      if(running && timeLeft>0){
+        const now=performance.now();
+        if(now>=nextTick){
+          timeLeft=Math.max(0,timeLeft-1);
           render();
 
-          // 5:00 -> tocar m5.mp3
-          if (timeLeft === 300 && !eventsFired.has(300)){
-            playBufferByKey('m5');
-            eventsFired.add(300);
-          }
-          // 1:00 -> tocar m1.mp3
-          if (timeLeft === 60 && !eventsFired.has(60)){
-            playBufferByKey('m1');
-            eventsFired.add(60);
+          // MP3 exatos
+          if(timeLeft===300 && !eventsFired.has(300)){ playBufferByKey('m5'); eventsFired.add(300); }
+          if(timeLeft===60  && !eventsFired.has(60 )){ playBufferByKey('m1'); eventsFired.add(60 ); }
+
+          // Padrões extras
+          if(MILESTONES[timeLeft] && !eventsFired.has(timeLeft)){ playPattern(MILESTONES[timeLeft]); eventsFired.add(timeLeft); }
+
+          // Últimos 10s
+          if(timeLeft>0 && timeLeft<=10){
+            const key=`last10_${timeLeft}`;
+            if(!eventsFired.has(key) && LAST10_PATTERN){ playPattern(LAST10_PATTERN); eventsFired.add(key); }
           }
 
-          // outros marcos (ex.: 10:00, 2:00) via padrão
-          if (MILESTONES[timeLeft] && !eventsFired.has(timeLeft)){
-            playPattern(MILESTONES[timeLeft]);
-            eventsFired.add(timeLeft);
-          }
-
-          // últimos 10s
-          if (timeLeft > 0 && timeLeft <= 10){
-            const key = `last10_${timeLeft}`;
-            if (!eventsFired.has(key) && LAST10_PATTERN){
-              playPattern(LAST10_PATTERN);
-              eventsFired.add(key);
-            }
-          }
-
-          // fim
-          if (timeLeft === 0 && !eventsFired.has(0)){
-            playBufferByKey('end'); // som final
-            eventsFired.add(0);
-            running = false;
-            openModal(); $('#resultsBox').open = true;
+          // Fim
+          if(timeLeft===0 && !eventsFired.has(0)){
+            playBufferByKey('end'); eventsFired.add(0); running=false; openModal(); $('#resultsBox').open=true;
           }
 
           nextTick += 1000;
@@ -458,10 +431,8 @@
       requestAnimationFrame(clockLoop);
     }
 
-    // Ignorar atalhos quando digitando
-    function isTypingTarget(el){ if (!el) return false; const t=el.tagName?.toLowerCase(); return t==='input'||t==='textarea'||el.isContentEditable; }
-
-    // Wire-up botões
+    // ===== Teclado (ignora quando digitando) =====
+    function isTypingTarget(el){ if(!el) return false; const t=el.tagName?.toLowerCase(); return t==='input'||t==='textarea'||el.isContentEditable; }
     $('#aPlus').addEventListener('click', ()=>changeScore('A', +1));
     $('#aMinus').addEventListener('click', ()=>changeScore('A', -1));
     $('#bPlus').addEventListener('click', ()=>changeScore('B', +1));
@@ -472,23 +443,22 @@
     $('#reset').addEventListener('click', reset);
     $('#finalize').addEventListener('click', ()=>{ openModal(); $('#resultsBox').open = true; });
 
-    // Teclado
-    window.addEventListener('keydown', (e)=>{
-      if (isTypingTarget(e.target)) return;
-      if (['F6','F7','F8','F9','F10','F11','F12'].includes(e.key) || (e.ctrlKey && e.key==='F12')) e.preventDefault();
-      if (e.key === ' ') { e.preventDefault(); toggle(); }
-      else if (e.key === 'r' || e.key === 'R') reset();
-      else if (e.key === '[') changeTime(-30);
-      else if (e.key === ']') changeTime(+30);
-      else if (e.key === 'q' || e.key === 'Q') changeScore('A', -1);
-      else if (e.key === 'w' || e.key === 'W') changeScore('A', +1);
-      else if (e.key === 'o' || e.key === 'O') changeScore('B', -1);
-      else if (e.key === 'p' || e.key === 'P') changeScore('B', +1);
-      else if (e.key === '1') jumpTo(20);
-      else if (e.key === '2') jumpTo(60);
-      else if (e.key === '3') jumpTo(120);
-      else if (e.key === '5') jumpTo(300);
-      else if (e.key === '0') jumpTo(600);
+    window.addEventListener('keydown', e=>{
+      if(isTypingTarget(e.target)) return;
+      if(['F6','F7','F8','F9','F10','F11','F12'].includes(e.key) || (e.ctrlKey && e.key==='F12')) e.preventDefault();
+      if(e.key===' '){ e.preventDefault(); toggle(); }
+      else if(e.key==='r'||e.key==='R') reset();
+      else if(e.key==='[') changeTime(-30);
+      else if(e.key===']') changeTime(+30);
+      else if(e.key==='q'||e.key==='Q') changeScore('A', -1);
+      else if(e.key==='w'||e.key==='W') changeScore('A', +1);
+      else if(e.key==='o'||e.key==='O') changeScore('B', -1);
+      else if(e.key==='p'||e.key==='P') changeScore('B', +1);
+      else if(e.key==='1') jumpTo(20);
+      else if(e.key==='2') jumpTo(60);
+      else if(e.key==='3') jumpTo(120);
+      else if(e.key==='5') jumpTo(300);
+      else if(e.key==='0') jumpTo(600);
     }, {passive:false});
 
     // init
