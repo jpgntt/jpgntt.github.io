@@ -1,720 +1,1138 @@
-<!doctype html>
-<html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <title>Placar Bike Polo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🏑 Placar Bike Polo — Web</title>
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#111111">
-
   <style>
-    :root{
-      --bg1:#111; --bg2:#181818; --panel:#202020; --txt:#eaeaea;
-      --a:#1E40AF; --b:#B91C1C; --accent:#3b82f6; --danger:#ef4444;
-      --gap:16px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; background:#000; color:var(--txt);
-      font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      display:grid; grid-template-rows: 1fr 5fr auto; min-height:100svh;
-    }
-    header, footer{background:var(--bg1); padding:8px var(--gap); display:flex; align-items:center; justify-content:center}
-    header{ position:relative; }
-    .time{
-      font-weight:800; text-align:center; background:var(--bg1); border-radius:16px; padding:8px 12px;
-      font-size: clamp(32px, 8vw, 96px); cursor:text; user-select:none;
-    }
-    .time.running{ cursor:not-allowed; opacity:0.9; }
-    /* Editor inline do tempo */
-    .time-input{
-      position:absolute; left:50%; top:18px; transform:translateX(-50%);
-      z-index:5; display:none; width:min(320px, 70vw); text-align:center;
-      font-weight:800; font-size: clamp(28px, 7.5vw, 80px);
-      padding:6px 12px; border-radius:12px; border:2px solid #3c6ac6;
-      background:#161616; color:#eaeaea; outline:none;
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: dark;
     }
 
-    .panel{background:var(--panel); border-radius:16px; padding:16px; display:flex; flex-direction:column; align-items:center}
-    .title{opacity:.9; font-weight:700; margin-bottom:8px; font-size: clamp(16px, 2.5vw, 28px)}
-    .title[contenteditable="true"]{outline:2px dashed transparent; border-radius:6px; padding:2px 6px; cursor:text}
-    .title[contenteditable="true"]:focus{outline:2px dashed var(--accent); background:#262626}
-    .score{font-weight:900; letter-spacing:1px; margin:0 0 12px; font-size: clamp(48px, 10vw, 120px)}
-    .grid{ display:grid; gap:12px; }
-    .grid.two{grid-template-columns: 1fr 1fr;}
-    .grid.one{grid-template-columns: 1fr;}
-
-    /* Botões acessíveis (semântica + foco) */
-    button{
-      appearance:none; -webkit-appearance:none;
-      cursor:pointer; user-select:none; text-align:center;
-      border-radius:12px; padding:12px;
-      background:#2b2b2b; color:#fff; font-weight:800;
-      font-size: clamp(16px, 2.2vw, 24px);
-      border:2px solid #333;
+    body {
+      margin: 0;
+      background: #050608;
+      color: #f5f5f5;
+      display: flex;
+      justify-content: center;
     }
-    button:active{transform:translateY(1px)}
-    button:focus-visible{ outline:3px solid #3b82f6; outline-offset:2px; }
-    button[disabled]{ opacity:0.5; cursor:not-allowed; }
 
-    .btn-big{padding:16px; font-size: clamp(20px, 2.6vw, 28px)}
-    .btn-play{padding:18px; font-size: clamp(24px, 3vw, 32px)}
-    .center .grid.one button{min-height:64px}
-    footer{font-size:clamp(11px, 1.6vw, 14px); text-align:center}
-    .tips{opacity:.85}
-
-    /* Áreas do grid */
-    .panel.left  { grid-area: left; }
-    .panel.center{ grid-area: center; }
-    .panel.right { grid-area: right; }
-
-    /* Desktop */
-    main{
-      background:var(--bg2);
-      padding:var(--gap);
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-areas: "left center right";
-      gap:var(--gap);
+    .app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      padding: 16px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    /* Mobile */
-    @media (max-width: 900px){
-      main{
+
+    header {
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      margin: 0;
+    }
+    header p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    nav button {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      border: none;
+      background: #22252e;
+      color: #f5f5f5;
+      cursor: pointer;
+    }
+
+    nav button.active {
+      background: #00c896;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .card {
+      background: #10121a;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #333542;
+      background: #050608;
+      color: #f5f5f5;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid #00c896;
+      border-color: #00c896;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #00c896;
+      color: #041012;
+    }
+
+    .btn-secondary {
+      background: #22252e;
+      color: #f5f5f5;
+    }
+
+    .list {
+      margin-top: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .small-text {
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+
+    /* Jogadoras */
+    .player-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #191c26;
+      border-radius: 999px;
+      padding: 4px 8px;
+      margin: 2px 0;
+      font-size: 0.85rem;
+    }
+
+    .player-row-name {
+      flex: 1;
+      margin-right: 8px;
+    }
+
+    .player-row-buttons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .player-row-buttons button {
+      border: none;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      background: #22252e;
+      color: #f5f5f5;
+    }
+
+    .player-row-buttons button.danger {
+      background: #f54266;
+      color: #fff;
+    }
+
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: auto;
+    }
+
+    .checkbox-item.player-in-team {
+      opacity: 0.7;
+    }
+    .checkbox-item.player-in-team::after {
+      content: " (já em um time)";
+      font-size: 0.75rem;
+      margin-left: 4px;
+      opacity: 0.9;
+    }
+
+    .team-pill {
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: #191c26;
+      margin: 4px 0;
+      font-size: 0.85rem;
+    }
+
+    .team-pill-header {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .team-pill-buttons {
+      margin-top: 4px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .team-pill-button {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #22252e;
+      color: #f5f5f5;
+    }
+
+    .team-pill-button.danger {
+      background: #f54266;
+      color: #fff;
+    }
+
+    /* Placar */
+    .score-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .score-card {
+      background: #10121a;
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .score-team-name {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .score-value {
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+
+    .footer-actions {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      min-height: 1.2em;
+    }
+
+    .status.ok {
+      color: #00c896;
+    }
+
+    .status.error {
+      color: #f54266;
+    }
+
+    /* Gols por jogadora */
+    .goals-section {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .goals-team-block h3 {
+      margin: 0 0 4px;
+      font-size: 0.95rem;
+    }
+
+    .goals-list {
+      margin-top: 4px;
+      font-size: 0.85rem;
+    }
+
+    .goals-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .goals-player-name {
+      flex: 1;
+      margin-right: 8px;
+    }
+
+    .goals-player-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .goals-player-controls button {
+      border-radius: 999px;
+      border: none;
+      padding: 4px 8px;
+      font-size: 1rem;
+      background: #22252e;
+      color: #f5f5f5;
+      cursor: pointer;
+    }
+
+    .goals-player-score {
+      min-width: 18px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 480px) {
+      header h1 {
+        font-size: 1.6rem;
+      }
+
+      .goals-section {
         grid-template-columns: 1fr 1fr;
-        grid-template-areas:
-          "left  right"
-          "center center";
       }
     }
-
-    /* Resultados */
-    .results-wrap{ width:100%; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:8px; }
-    details.results{ background:#121212; border:1px solid #232323; border-radius:10px; padding:8px 12px; }
-    details.results summary{cursor:pointer; font-weight:700}
-    .result-item{
-      display:grid; grid-template-columns: 1fr auto auto; align-items:center;
-      gap:8px; padding:8px; border-radius:8px; background:#1b1b1b; margin-top:8px;
-    }
-    .result-item .meta{opacity:.9; font-size:14px}
-    .result-item .actions button{ border-color:#333; padding:8px 12px; font-size:14px; margin-left:6px; }
-    .actions .edit{background:#243b55}
-    .actions .delete{background:#3a2323}
-
-    /* Modal */
-    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50; }
-    .modal{
-      width:min(92vw, 560px); background:#1a1a1a; border:1px solid #2b2b2b; border-radius:14px; padding:16px;
-      display:flex; flex-direction:column; gap:12px;
-    }
-    .modal h3{margin:0; font-size:20px}
-    .form-row{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
-    .input{ background:#111; border:1px solid #333; color:#fff; padding:10px 12px; border-radius:10px; font-size:16px; width:100%; }
-    .modal .btn-row{display:flex; justify-content:flex-end; gap:10px; margin-top:6px}
-    .btn-outline{background:#202020; border:2px solid #333}
-    .btn-primary{background:#284f99; border:2px solid #3c6ac6}
-    .btn-danger{background:#6b2727; border:2px solid #8b2e2e}
-    .small{font-size:12px; opacity:.8}
-
-    /* Volume */
-    .controls{
-      display:flex; gap:12px; align-items:center; justify-content:center;
-      margin-top:8px; flex-wrap:wrap;
-    }
-    .slider{ accent-color:#3b82f6; }
-    .label{ opacity:.85; font-size:14px; }
   </style>
 </head>
 <body>
-  <header>
-    <div id="time" class="time" title="Clique para editar o tempo">15:00</div>
-    <input id="timeEdit" class="time-input" type="text" inputmode="numeric" pattern="[0-9:]*" aria-label="Editar tempo (MM:SS ou apenas números)" />
-  </header>
+  <div class="app">
+    <header>
+      <h1>Placar Bike Polo</h1>
+      <p>Cadastro de jogadoras, times e jogos</p>
+      <nav>
+        <button id="tabPlayers" class="active">Jogadoras</button>
+        <button id="tabTeams">Times</button>
+        <button id="tabScore">Placar</button>
+      </nav>
+    </header>
 
-  <main>
-    <section class="panel left">
-      <div id="nameA" class="title" contenteditable="true" spellcheck="false">Equipe A</div>
-      <div id="scoreA" class="score" style="color:var(--a)">0</div>
-      <div class="grid two">
-        <button class="btn-big" id="aPlus"  type="button">+</button>
-        <button class="btn-big" id="aMinus" type="button">−</button>
+    <!-- Tela Jogadoras -->
+    <section id="screenPlayers" class="screen active">
+      <div class="card">
+        <h2>Cadastro de jogadoras</h2>
+        <label for="playerName">Nome da jogadora</label>
+        <input id="playerName" type="text" placeholder="Ex: Biciane, Poliane, etc" />
+        <button id="savePlayerBtn" class="btn btn-primary" style="margin-top:8px;">
+          + Adicionar jogadora
+        </button>
+        <div class="list" id="playersList"></div>
+        <p class="small-text">
+          Dica: deixe todas jogadoras cadastradas antes de montar os times.
+        </p>
       </div>
     </section>
 
-    <section class="panel center">
-      <div class="grid one" style="width:100%">
-        <button id="plus30"  class="btn-big"  type="button">+ Tempo (+15s)</button>
-        <button id="toggle"  class="btn-play" type="button">▶ / ⏸</button>
-        <button id="minus30" class="btn-big"  type="button">− Tempo (−15s)</button>
-        <button id="reset"   class="btn-big"  type="button">⟳ Reset (15:00)</button>
-        <button id="finalize" class="btn-big" type="button" style="background:#2a3b24;border-color:#3c5a33">✅ Finalizar/Salvar partida</button>
+    <!-- Tela Times -->
+    <section id="screenTeams" class="screen">
+      <div class="card">
+        <h2>Criar / editar times</h2>
+        <label for="teamName">Nome do time</label>
+        <input id="teamName" type="text" placeholder="Ex.: Time Verde, Time Azul..." />
+        <label style="margin-top:8px;">Selecione as jogadoras deste time:</label>
+        <div class="checkbox-list" id="playersCheckboxList"></div>
+        <button id="saveTeamBtn" class="btn btn-primary" style="margin-top:8px;">
+          + Criar time
+        </button>
+        <p class="small-text">
+          Jogadoras já usadas em algum time aparecem marcadas, mas você ainda pode reutilizá-las se quiser.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Times cadastrados</h2>
+        <div id="teamsList"></div>
+        <p class="small-text">
+          Você pode editar ou excluir times a qualquer momento.
+        </p>
       </div>
     </section>
 
-    <section class="panel right">
-      <div id="nameB" class="title" contenteditable="true" spellcheck="false">Equipe B</div>
-      <div id="scoreB" class="score" style="color:var(--b)">0</div>
-      <div class="grid two">
-        <button class="btn-big" id="bPlus"  type="button">+</button>
-        <button class="btn-big" id="bMinus" type="button">−</button>
+    <!-- Tela Placar -->
+    <section id="screenScore" class="screen">
+      <div class="card">
+        <h2>Configurar jogo</h2>
+        <label for="teamASelect">Time A</label>
+        <select id="teamASelect"></select>
+
+        <label for="teamBSelect" style="margin-top:8px;">Time B</label>
+        <select id="teamBSelect"></select>
+
+        <p class="small-text" id="currentGameInfo"></p>
+      </div>
+
+      <div class="score-container">
+        <div class="score-card">
+          <div class="score-team-name" id="teamANameDisplay">Time A</div>
+          <div class="score-value" id="scoreADisplay">0</div>
+        </div>
+
+        <div class="score-card">
+          <div class="score-team-name" id="teamBNameDisplay">Time B</div>
+          <div class="score-value" id="scoreBDisplay">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Gols por jogadora</h2>
+        <div class="goals-section">
+          <div class="goals-team-block">
+            <h3>Time A</h3>
+            <div class="goals-list" id="goalsListA"></div>
+          </div>
+
+          <div class="goals-team-block">
+            <h3>Time B</h3>
+            <div class="goals-list" id="goalsListB"></div>
+          </div>
+        </div>
+        <p class="small-text">
+          Use os botões + e - em cada jogadora. O placar do time é a soma dos gols individuais.
+        </p>
+      </div>
+
+      <div class="footer-actions">
+        <button id="finishGameBtn" class="btn btn-primary">
+          Finalizar jogo e salvar no Sheets
+        </button>
+        <button id="resetScoreBtn" class="btn btn-secondary">
+          Resetar gols do jogo
+        </button>
+        <div id="statusMessage" class="status"></div>
       </div>
     </section>
-  </main>
-
-  <footer>
-    <div class="results-wrap">
-      <div class="tips">
-        Atalhos: Espaço = start/pausa • R = reset • [ = −15s • ] = +15s • 1→00:20 • 2→01:00 • 3→02:00 • 5→05:00 • 0→10:00 • Q/W A−/A+ • O/P B−/B+
-      </div>
-
-      <div class="controls">
-        <span class="label">🔊 Volume:</span>
-        <input id="vol" class="slider" type="range" min="0" max="100" step="1" value="95" />
-        <span id="volVal" class="label">95%</span>
-        <span class="label">• Histórico:</span>
-        <button id="openHistory" class="btn-outline" type="button">Abrir</button>
-        <button id="exportCSV" class="btn-outline" type="button">Exportar CSV</button>
-        <button id="clearAll"  class="btn-danger"  type="button">Apagar tudo</button>
-      </div>
-
-      <details class="results" id="resultsBox">
-        <summary>Resultados salvos (local)</summary>
-        <div id="resultsList"></div>
-      </details>
-
-      <div class="small">Funciona offline (PWA) e salva resultados no cache do navegador (localStorage) deste dispositivo.</div>
-    </div>
-  </footer>
-
-  <!-- Modal -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <h3 id="modalTitle">Revisar e salvar partida</h3>
-      <div class="form-row">
-        <div>
-          <label class="small">Time A</label>
-          <input id="mNameA" class="input" type="text" />
-        </div>
-        <div>
-          <label class="small">Placar A</label>
-          <input id="mScoreA" class="input" type="number" min="0" />
-        </div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label class="small">Time B</label>
-          <input id="mNameB" class="input" type="text" />
-        </div>
-        <div>
-          <label class="small">Placar B</label>
-          <input id="mScoreB" class="input" type="number" min="0" />
-        </div>
-      </div>
-      <div>
-        <label class="small">Observações (opcional)</label>
-        <input id="mNotes" class="input" type="text" placeholder="ex.: gol no último segundo, revisão de árbitro, etc." />
-      </div>
-      <div class="btn-row">
-        <button id="mCancel" class="btn-outline" type="button">Cancelar</button>
-        <button id="mSave"   class="btn-primary" type="button">Salvar</button>
-      </div>
-    </div>
   </div>
 
   <script>
-    // ===== CONFIG =====
-    const GAME_DURATION = 15 * 60;       // segundos
-    const MAX_TIME = 59*60 + 59;         // limite 59:59
-    const SOUND_URLS = {
-      start: "assets/sounds/start.mp3",
-      pause: "assets/sounds/pause.mp3",
-      end:   "assets/sounds/end.mp3",
-      m5:    "assets/sounds/5min.mp3",
-      m1:    "assets/sounds/1min.mp3",
+    // ========= ESTADO E CONFIG =========
+    const STORAGE_KEYS = {
+      PLAYERS: "polo_players",
+      TEAMS: "polo_teams"
     };
-    const MILESTONES = { 600:'SS', 120:'SSS' }; // extras sintetizados
-    const LAST10_PATTERN = 'S';
-    const AUTO_PAUSE_LATE_GOAL = true;   // pausa automática em gol < 2 min
 
-    // ===== Estado =====
-    let timeLeft = GAME_DURATION;
-    let running = false;
-    let endAt = null; // timestamp absoluto (ms) do término
-    let scoreA = 0, scoreB = 0;
-    let nameA = 'Equipe A', nameB = 'Equipe B';
-    let eventsFired = new Set();
-    let startPending = false;
-    let startSrc = null;       // fonte de áudio do start (para cancelar)
-    let startTimeout = null;   // timeout de início (fallback)
-    let startCanceled = false; // flag de cancelamento
-    let unlocked = false;      // áudio desbloqueado
-    let masterVol = 0.95;
+    const GOOGLE_SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbyQGRAq3-HkPy1JMEBbcze4ENdQGKsRyr7OuR6IfQAhiMtiwSbjzwJIPKrfN1IjaBeH/exec";
 
-    // ===== ID com fallback =====
-    function uid() {
-      try { if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID(); }
-      catch(e){}
-      return `${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
+    const DEFAULT_PLAYER_NAMES = [
+      "Dox",
+      "Vithinho",
+      "Buratto",
+      "Tulio",
+      "João/joãozin/jpg sla assovia",
+      "joao",
+      "mat",
+      "Robs",
+      "Lusca",
+      "Rodox",
+      "Leo",
+      "Marcos",
+      "Emi",
+      "Enzo",
+      "Rafa",
+      "Jay"
+    ];
+
+    let players = [];
+    let teams = [];
+    let goals = {}; // goals[playerId] = gols no jogo atual
+    let editingTeamId = null;
+    let editingPlayerId = null;
+
+    // ========= ELEMENTOS =========
+    const $ = (id) => document.getElementById(id);
+
+    const tabPlayers = $("tabPlayers");
+    const tabTeams = $("tabTeams");
+    const tabScore = $("tabScore");
+
+    const screenPlayers = $("screenPlayers");
+    const screenTeams = $("screenTeams");
+    const screenScore = $("screenScore");
+
+    const playerNameInput = $("playerName");
+    const savePlayerBtn = $("savePlayerBtn");
+    const playersListDiv = $("playersList");
+    const playersCheckboxList = $("playersCheckboxList");
+
+    const teamNameInput = $("teamName");
+    const saveTeamBtn = $("saveTeamBtn");
+    const teamsListDiv = $("teamsList");
+
+    const teamASelect = $("teamASelect");
+    const teamBSelect = $("teamBSelect");
+    const teamANameDisplay = $("teamANameDisplay");
+    const teamBNameDisplay = $("teamBNameDisplay");
+    const scoreADisplay = $("scoreADisplay");
+    const scoreBDisplay = $("scoreBDisplay");
+    const currentGameInfo = $("currentGameInfo");
+
+    const goalsListA = $("goalsListA");
+    const goalsListB = $("goalsListB");
+
+    const finishGameBtn = $("finishGameBtn");
+    const resetScoreBtn = $("resetScoreBtn");
+    const statusMessage = $("statusMessage");
+
+    // ========= HELPERS =========
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(players));
+      localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(teams));
     }
 
-    // ===== ÁUDIO =====
-    let audioCtx = null;
-    const buffers = {};
-    const beepQueue = [];
-    let beeperBusy = false;
-    let masterGain = null;
-
-    function ensureAudio(){
-      if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      if (!masterGain){
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = masterVol;
-        masterGain.connect(audioCtx.destination);
-      }
-    }
-    async function fetchAsBuffer(url){ ensureAudio(); const res=await fetch(url,{cache:"force-cache"}); const arr=await res.arrayBuffer(); return await audioCtx.decodeAudioData(arr); }
-    async function loadBuffer(key){ if (buffers[key]) return buffers[key]; const url=SOUND_URLS[key]; if (!url) return null; const buf=await fetchAsBuffer(url); buffers[key]=buf; return buf; }
-    async function playBufferByKey(key){
-      const buf = await loadBuffer(key);
-      if (!buf) return 0;
-      ensureAudio();
-      const src = audioCtx.createBufferSource();
-      src.buffer = buf;
-      src.connect(masterGain);
-      src.start();
-      const ms = buf.duration*1000; await new Promise(r=>setTimeout(r, ms)); return ms;
-    }
-    // síntese fallback para padrões
-    const BEEP_SHORT_FREQ=500, BEEP_LONG_FREQ=700, BEEP_SHORT_MS=500, BEEP_LONG_MS=900;
-    async function playTone(freq, durMs){
-      ensureAudio();
-      const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
-      osc.type='sine'; osc.frequency.value=freq;
-      g.gain.setValueAtTime(0.001,audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.3,audioCtx.currentTime+0.01);
-      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+durMs/1000);
-      osc.connect(g).connect(masterGain);
-      osc.start(); await new Promise(r=>setTimeout(r,durMs)); osc.stop();
-    }
-    async function playPattern(pattern){
-      if (!pattern) return;
-      beepQueue.push(pattern);
-      if (beeperBusy) return;
-      beeperBusy = true;
-      try{
-        while(beepQueue.length){
-          const pat = beepQueue.shift();
-          for (let i=0;i<pat.length;i++){
-            const short = pat[i].toUpperCase()==='S';
-            await playTone(short?BEEP_SHORT_FREQ:BEEP_LONG_FREQ, short?BEEP_SHORT_MS:BEEP_LONG_MS);
-            await new Promise(r=>setTimeout(r,120));
-          }
-        }
-      }finally{ beeperBusy=false; }
-    }
-
-    // Pré-desbloqueio/pré-carregamento de áudio (1º toque)
-    window.addEventListener('pointerdown', async ()=>{
-      if (unlocked) return;
-      unlocked = true;
+    function loadFromStorage() {
       try {
-        ensureAudio();
-        await Promise.all(Object.keys(SOUND_URLS).map(loadBuffer));
-        console.log('[AUDIO] buffers prontos');
-      } catch(e) { console.warn('[AUDIO] prefetch falhou', e); }
-    }, {once:true, passive:true});
-
-    // ===== Helpers/UI =====
-    const $ = sel => document.querySelector(sel);
-    function fmt(sec){
-      sec = Math.max(0, Math.floor(sec));
-      const m = String(Math.floor(sec/60)).padStart(2,'0');
-      const s = String(sec%60).padStart(2,'0');
-      return `${m}:${s}`;
-    }
-    function clampTime(v){ return Math.max(0, Math.min(v, MAX_TIME)); }
-
-    function setRunUI(state){
-      $('#time').classList.toggle('running', state);
-      // mantemos os botões de ±15s ativos mesmo rodando
-      if (state) { timeEdit.blur(); timeEdit.style.display='none'; }
+        const p = JSON.parse(localStorage.getItem(STORAGE_KEYS.PLAYERS));
+        const t = JSON.parse(localStorage.getItem(STORAGE_KEYS.TEAMS));
+        players = Array.isArray(p) ? p : [];
+        teams = Array.isArray(t) ? t : [];
+      } catch (_) {
+        players = [];
+        teams = [];
+      }
     }
 
-    function render(){
-      $('#time').textContent = fmt(timeLeft);
-      $('#scoreA').textContent = String(scoreA);
-      $('#scoreB').textContent = String(scoreB);
-      $('#nameA').textContent = nameA;
-      $('#nameB').textContent = nameB;
-      setRunUI(running);
-    }
-
-    // dispara marcos cruzados entre oldTL -> newTL
-    function fireMilestonesBetween(oldTL, newTL){
-      if (oldTL >= 300 && newTL < 300 && !eventsFired.has(300)) { playBufferByKey('m5'); eventsFired.add(300); }
-      if (oldTL >=  60 && newTL <  60 && !eventsFired.has(60 )) { playBufferByKey('m1'); eventsFired.add(60 ); }
-      [600,120].forEach(t=>{
-        if (MILESTONES[t] && oldTL >= t && newTL < t && !eventsFired.has(t)) {
-          playPattern(MILESTONES[t]); eventsFired.add(t);
+    function ensureDefaultPlayers() {
+      // adiciona jogadoras padrão se ainda não existirem (case-insensitive)
+      DEFAULT_PLAYER_NAMES.forEach((name) => {
+        const exists = players.some(
+          (p) => p.name.toLowerCase() === name.toLowerCase()
+        );
+        if (!exists) {
+          players.push({ id: generateId("p"), name });
         }
       });
-      if (newTL > 0 && newTL <= 10){
-        const key = `last10_${newTL}`;
-        if (!eventsFired.has(key) && LAST10_PATTERN){
-          if (beepQueue.length > 4) beepQueue.length = 0;
-          playPattern(LAST10_PATTERN); eventsFired.add(key);
-        }
+      saveToStorage();
+    }
+
+    function setStatus(text, type = "") {
+      statusMessage.textContent = text || "";
+      statusMessage.className = "status";
+      if (type === "ok") statusMessage.classList.add("ok");
+      if (type === "error") statusMessage.classList.add("error");
+    }
+
+    function generateId(prefix) {
+      return prefix + "_" + Math.random().toString(36).slice(2, 9);
+    }
+
+    function getTeamScore(team) {
+      if (!team) return 0;
+      return team.playerIds.reduce((sum, id) => sum + (goals[id] || 0), 0);
+    }
+
+    function showScreen(screen) {
+      [screenPlayers, screenTeams, screenScore].forEach((s) =>
+        s.classList.remove("active")
+      );
+      [tabPlayers, tabTeams, tabScore].forEach((t) =>
+        t.classList.remove("active")
+      );
+
+      if (screen === "players") {
+        screenPlayers.classList.add("active");
+        tabPlayers.classList.add("active");
+      } else if (screen === "teams") {
+        screenTeams.classList.add("active");
+        tabTeams.classList.add("active");
+      } else {
+        screenScore.classList.add("active");
+        tabScore.classList.add("active");
       }
     }
 
-    function purgeFutureEventsForTL(tl){
-      eventsFired = new Set([...eventsFired].filter(e=>{
-        if (typeof e === 'number') return e <= tl;
-        if (typeof e === 'string' && e.startsWith('last10_')) return tl <= 10;
-        return true;
-      }));
-    }
-
-    // ===== Resultados (localStorage com proteção) =====
-    const LS_KEY='polo_matches_v1';
-    function loadMatches(){
-      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-      catch(e){ console.warn('[LS load]', e); return []; }
-    }
-    function saveMatches(list){
-      try { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
-      catch(e){ console.error('[LS save]', e); alert('Falha ao salvar no armazenamento local.'); }
-    }
-    function addMatch(rec){ const l=loadMatches(); l.unshift(rec); saveMatches(l); renderResults(); }
-    function updateMatch(id,patch){ const l=loadMatches(); const i=l.findIndex(x=>x.id===id); if(i>=0){ l[i]={...l[i],...patch,edited:true}; saveMatches(l); renderResults(); } }
-    function deleteMatch(id){ saveMatches(loadMatches().filter(x=>x.id!==id)); renderResults(); }
-    function renderResults(){
-      const list=loadMatches(), c=$('#resultsList'); c.innerHTML='';
-      if(!list.length){ c.innerHTML='<div class="small">Nenhum resultado salvo ainda.</div>'; return; }
-      list.slice(0,20).forEach(rec=>{
-        const row=document.createElement('div'); row.className='result-item';
-        const when=new Date(rec.timestamp).toLocaleString();
-        row.innerHTML=`
-          <div>
-            <div><strong>${rec.nameA}</strong> ${rec.scoreA} × ${rec.scoreB} <strong>${rec.nameB}</strong></div>
-            <div class="meta">${when}${rec.edited?' • editado':''} • duração: ${fmt(rec.duration)}</div>
-            ${rec.notes?`<div class="small">Obs.: ${rec.notes}</div>`:''}
-          </div>
-          <div class="actions"><button class="edit" type="button">Editar</button></div>
-          <div class="actions"><button class="delete" type="button">Excluir</button></div>`;
-        row.querySelector('.edit').addEventListener('click',()=>{
-          openModal({id:rec.id,nameA:rec.nameA,nameB:rec.nameB,scoreA:rec.scoreA,scoreB:rec.scoreB,notes:rec.notes||'',duration:rec.duration},true);
-        });
-        row.querySelector('.delete').addEventListener('click',()=>{ if(confirm('Excluir este registro?')) deleteMatch(rec.id); });
-        c.appendChild(row);
-      });
-    }
-    function openHistory() {
-      const d = document.getElementById('resultsBox');
-      d.open = true;
-      d.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    function exportMatchesToCSV() {
-      const rows = loadMatches();
-      if (!rows.length) { alert('Nenhum resultado para exportar.'); return; }
-      const lines = [['timestamp','data_hora','timeA','placarA','placarB','timeB','duracao_seg','duracao_mmss','obs']];
-      for (const r of rows) {
-        const when = new Date(r.timestamp);
-        const human = when.toLocaleString();
-        const dur = Number(r.duration||0);
-        const mm = String(Math.floor(dur/60)).padStart(2,'0');
-        const ss = String(dur%60).padStart(2,'0');
-        lines.push([
-          String(r.timestamp),
-          human,
-          (r.nameA||'').replaceAll('"','""'),
-          r.scoreA ?? 0,
-          r.scoreB ?? 0,
-          (r.nameB||'').replaceAll('"','""'),
-          dur,
-          `${mm}:${ss}`,
-          (r.notes||'').replaceAll('"','""')
-        ]);
-      }
-      const csv = lines.map(cols => cols.map(v => {
-        const s = String(v);
-        return /[",;\n]/.test(s) ? `"${s}"` : s;
-      }).join(';')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const dt = new Date();
-      a.download = `placar_bike_polo_${dt.toISOString().slice(0,10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-    function clearAllMatches() {
-      if (!confirm('Apagar TODO o histórico salvo neste dispositivo?')) return;
-      saveMatches([]);
-      renderResults();
-    }
-
-    // ===== Modal =====
-    const modal=$('#modalBackdrop');
-    const mNameA=$('#mNameA'), mNameB=$('#mNameB'), mScoreA=$('#mScoreA'), mScoreB=$('#mScoreB'), mNotes=$('#mNotes'), mCancel=$('#mCancel'), mSave=$('#mSave');
-    let editingId=null; let currentDuration=GAME_DURATION;
-    function openModal(data=null,isEditing=false){
-      if(data){
-        editingId=isEditing?data.id:null;
-        mNameA.value=data.nameA??nameA; mNameB.value=data.nameB??nameB;
-        mScoreA.value=data.scoreA??scoreA; mScoreB.value=data.scoreB??scoreB;
-        mNotes.value=data.notes??''; currentDuration=data.duration??(GAME_DURATION-timeLeft);
-      }else{
-        editingId=null; mNameA.value=nameA; mNameB.value=nameB; mScoreA.value=scoreA; mScoreB.value=scoreB; mNotes.value=''; currentDuration=GAME_DURATION-timeLeft;
-      }
-      modal.style.display='flex'; mNameA.focus();
-    }
-    function closeModal(){ modal.style.display='none'; }
-    mCancel.addEventListener('click', closeModal);
-    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
-    mSave.addEventListener('click', ()=>{
-      try{
-        const rec={
-          id: editingId || uid(),
-          timestamp: Date.now(),
-          nameA: (mNameA.value||'').trim()||'Equipe A',
-          nameB: (mNameB.value||'').trim()||'Equipe B',
-          scoreA: Math.max(0, parseInt(mScoreA.value||'0',10)),
-          scoreB: Math.max(0, parseInt(mScoreB.value||'0',10)),
-          duration: Math.max(0, Number.isFinite(currentDuration) ? currentDuration : (GAME_DURATION - timeLeft)),
-          notes: (mNotes.value||'').trim(),
-          edited: !!editingId
-        };
-        if(editingId) updateMatch(editingId,rec); else addMatch(rec);
-        document.getElementById('resultsBox').open = true;
-        closeModal();
-      }catch(err){
-        console.error('[SAVE ERROR]', err);
-        alert('Não foi possível salvar o resultado.\nVeja o console para detalhes.');
-      }
-    });
-
-    // ===== Ajustes de tempo e placar =====
-    function changeScore(team,delta){
-      if(team==='A'){scoreA=Math.max(0,scoreA+delta);} else {scoreB=Math.max(0,scoreB+delta);}
-      // Pausa automática se for gol (+1) nos últimos 2 minutos
-      if (AUTO_PAUSE_LATE_GOAL && delta > 0 && running && timeLeft <= 120){
-        running = false;
-        endAt = null;
-        setRunUI(false);
-        playBufferByKey('pause');
-        console.log('[AUTO-PAUSE] Gol nos últimos 2 minutos → relógio pausado');
-      }
-      render();
-    }
-    function changeTime(delta){
-      const newTL = clampTime(timeLeft + delta);
-      timeLeft = newTL;
-      if (running && endAt!=null) { endAt = Date.now() + newTL*1000; } // mantém deadline correto
-      render(); purgeFutureEventsForTL(timeLeft);
-    }
-    function jumpTo(sec){
-      const newTL = clampTime(Math.floor(sec));
-      timeLeft = newTL;
-      if (running && endAt!=null) { endAt = Date.now() + newTL*1000; }
-      render(); purgeFutureEventsForTL(timeLeft);
-    }
-
-    // ===== Start cancelável =====
-    function cleanupStartObjects(){
-      if (startSrc){
-        try{ startSrc.onended = null; startSrc.stop(0); }catch{}
-        startSrc = null;
-      }
-      if (startTimeout){ clearTimeout(startTimeout); startTimeout = null; }
-    }
-    function actuallyStart(){
-      if (!startPending || startCanceled) return;
-      eventsFired.clear(); // novo jogo
-      endAt = Date.now() + clampTime(timeLeft)*1000;
-      running = true;
-      startPending = false;
-      startCanceled = false;
-      setRunUI(true);
-      console.log('[STATE] INICIADO', fmt(timeLeft), '(start concluído)');
-    }
-    async function requestStart(){
-      ensureAudio();
-      const buf = await loadBuffer('start');
-      if (!buf){ // sem start.mp3, apenas inicia
-        actuallyStart(); return;
-      }
-      cleanupStartObjects();
-      startCanceled = false;
-      startPending = true;
-
-      startSrc = audioCtx.createBufferSource();
-      startSrc.buffer = buf;
-      startSrc.connect(masterGain);
-      startSrc.onended = ()=>{
-        if (!startCanceled && startPending) { actuallyStart(); }
-      };
-      startSrc.start(0);
-      startTimeout = setTimeout(()=>{
-        if (!startCanceled && startPending) { actuallyStart(); }
-      }, Math.ceil(buf.duration*1000));
-
-      console.log('[STATE] START PENDING… (start.mp3 tocando)');
-    }
-    function cancelStart(){
-      if (!startPending) return;
-      startCanceled = true;
-      cleanupStartObjects();
-      startPending = false;
-      running = false;
-      setRunUI(false);
-      console.log('[STATE] START CANCELADO');
-    }
-
-    async function toggle(){
-      ensureAudio();
-      if (startPending){
-        cancelStart();
-        playBufferByKey('pause'); // feedback
+    // ========= RENDER: JOGADORAS =========
+    function renderPlayersList() {
+      playersListDiv.innerHTML = "";
+      if (players.length === 0) {
+        playersListDiv.innerHTML =
+          "<p class='small-text'>Nenhuma jogadora cadastrada ainda.</p>";
         return;
       }
-      if(running){
-        running=false; endAt=null;
-        playBufferByKey('pause'); console.log('[STATE] PAUSADO', fmt(timeLeft));
-        render(); return;
-      }
-      await requestStart(); // iniciar sequência de start (cancelável)
+
+      players.forEach((p) => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "player-row-name";
+        nameSpan.textContent = p.name;
+
+        const btns = document.createElement("div");
+        btns.className = "player-row-buttons";
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Editar";
+        editBtn.addEventListener("click", () => startEditPlayer(p.id));
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Excluir";
+        delBtn.className = "danger";
+        delBtn.addEventListener("click", () => deletePlayer(p.id));
+
+        btns.appendChild(editBtn);
+        btns.appendChild(delBtn);
+
+        row.appendChild(nameSpan);
+        row.appendChild(btns);
+
+        playersListDiv.appendChild(row);
+      });
     }
 
-    function reset(){
-      cancelStart(); // garante cancelamento se estiver tocando o start
-      running=false;
-      timeLeft=GAME_DURATION;
-      endAt=null;
-      eventsFired.clear();
-      render();
-      console.log('[RESET] 15:00; eventos limpos.');
-    }
+    function renderPlayersCheckboxes() {
+      playersCheckboxList.innerHTML = "";
+      players.forEach((p) => {
+        const label = document.createElement("label");
+        label.className = "checkbox-item";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = p.id;
 
-    // Nomes
-    $('#nameA').addEventListener('input', e=>{ nameA=e.currentTarget.textContent.trim()||'Equipe A'; });
-    $('#nameB').addEventListener('input', e=>{ nameB=e.currentTarget.textContent.trim()||'Equipe B'; });
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(p.name));
 
-    // ===== Editor de tempo (<input>) =====
-    const timeEl=$('#time'); const timeEdit=$('#timeEdit');
-    function parseTimeText(txt){
-      if(!txt) return null; txt=String(txt).trim();
-      if(txt.includes(':')){ const [mStr,sStr]=txt.split(':'); const m=Math.max(0,parseInt(mStr||'0',10)); const s=Math.max(0,parseInt(sStr||'0',10)); return m*60+s; }
-      const digits=txt.replace(/\D/g,''); if(digits.length===0) return null;
-      if(digits.length<=2) return parseInt(digits,10);
-      const sec=parseInt(digits.slice(-2),10), min=parseInt(digits.slice(0,-2),10); return min*60+sec;
-    }
-    function openTimeEditor(){
-      if (running) return; // editor bloqueado enquanto rodando
-      timeEdit.value = fmt(timeLeft);
-      timeEdit.style.display='block';
-      requestAnimationFrame(()=>{ timeEdit.focus(); timeEdit.setSelectionRange(0,timeEdit.value.length); });
-    }
-    function closeTimeEditor(commit){
-      const wasVisible = timeEdit.style.display!=='none';
-      timeEdit.style.display='none';
-      if(commit && wasVisible){
-        const val=parseTimeText(timeEdit.value);
-        if(val!==null){
-          const newTL = clampTime(val);
-          timeLeft = newTL;
-          purgeFutureEventsForTL(timeLeft);
+        const isInAnyTeam = teams.some((t) => t.playerIds.includes(p.id));
+        if (isInAnyTeam) {
+          label.classList.add("player-in-team");
         }
-        render();
-      }
-    }
-    timeEl.addEventListener('click', openTimeEditor);
-    timeEdit.addEventListener('keydown', e=>{
-      if(e.key==='Enter'){ e.preventDefault(); closeTimeEditor(true); }
-      else if(e.key==='Escape'){ e.preventDefault(); closeTimeEditor(false); }
-    });
-    timeEdit.addEventListener('blur', ()=> closeTimeEditor(true));
 
-    // ===== Relógio baseado em “prazo absoluto” =====
-    function tickByDeadline(){
-      if (running && endAt!=null){
-        const oldTL = timeLeft;
-        const now = Date.now();
-        const newTL = clampTime(Math.ceil((endAt - now)/1000));
-        if (newTL !== oldTL){
-          timeLeft = newTL;
-          render();
-          fireMilestonesBetween(oldTL, newTL);
-          if (newTL === 0 && !eventsFired.has(0)){
-            playBufferByKey('end'); eventsFired.add(0);
-            running=false; endAt=null; setRunUI(false);
-            openModal(); $('#resultsBox').open=true;
-          }
+        playersCheckboxList.appendChild(label);
+      });
+    }
+
+    function renderPlayers() {
+      renderPlayersList();
+      renderPlayersCheckboxes();
+    }
+
+    // ========= AÇÕES: JOGADORAS =========
+    function startEditPlayer(playerId) {
+      const player = players.find((p) => p.id === playerId);
+      if (!player) return;
+      editingPlayerId = playerId;
+      playerNameInput.value = player.name;
+      savePlayerBtn.textContent = "Salvar jogadora";
+      showScreen("players");
+    }
+
+    function resetPlayerForm() {
+      editingPlayerId = null;
+      playerNameInput.value = "";
+      savePlayerBtn.textContent = "+ Adicionar jogadora";
+    }
+
+    function deletePlayer(playerId) {
+      const player = players.find((p) => p.id === playerId);
+      if (!player) return;
+      const ok = confirm(`Excluir jogadora "${player.name}"?`);
+      if (!ok) return;
+
+      // Remove da lista de jogadoras
+      players = players.filter((p) => p.id !== playerId);
+
+      // Remove de todos os times
+      teams.forEach((t) => {
+        t.playerIds = t.playerIds.filter((id) => id !== playerId);
+      });
+
+      // Remove dos gols
+      delete goals[playerId];
+
+      // Se estava em edição, reseta
+      if (editingPlayerId === playerId) {
+        resetPlayerForm();
+      }
+
+      saveToStorage();
+      renderPlayers();
+      renderTeams();
+      renderGoalsLists();
+    }
+
+    function handleSavePlayer() {
+      const name = playerNameInput.value.trim();
+      if (!name) return;
+
+      const nameLower = name.toLowerCase();
+      if (
+        players.some(
+          (p) =>
+            p.name.toLowerCase() === nameLower &&
+            (!editingPlayerId || p.id !== editingPlayerId)
+        )
+      ) {
+        alert("Já existe uma jogadora com esse nome.");
+        return;
+      }
+
+      if (editingPlayerId) {
+        const player = players.find((p) => p.id === editingPlayerId);
+        if (player) {
+          player.name = name;
         }
+      } else {
+        const newPlayer = { id: generateId("p"), name };
+        players.push(newPlayer);
       }
-      requestAnimationFrame(tickByDeadline);
+
+      saveToStorage();
+      resetPlayerForm();
+      renderPlayers();
+      renderGoalsLists();
     }
 
-    // ===== Volume =====
-    const volEl = document.getElementById('vol');
-    const volVal = document.getElementById('volVal');
-    function setVolumeFromUI(){
-      masterVol = Math.max(0, Math.min(1, (parseInt(volEl.value,10)||0)/100));
-      if (masterGain) masterGain.gain.value = masterVol;
-      volVal.textContent = `${Math.round(masterVol*100)}%`;
-      localStorage.setItem('polo_vol', String(volEl.value));
+    // ========= RENDER: TIMES =========
+    function renderTeams() {
+      teamsListDiv.innerHTML = "";
+      if (teams.length === 0) {
+        teamsListDiv.innerHTML =
+          "<p class='small-text'>Nenhum time cadastrado ainda.</p>";
+      } else {
+        teams.forEach((t) => {
+          const container = document.createElement("div");
+          container.className = "team-pill";
+
+          const header = document.createElement("div");
+          header.className = "team-pill-header";
+
+          const strong = document.createElement("strong");
+          strong.textContent = t.name;
+
+          const spanPlayers = document.createElement("span");
+          spanPlayers.className = "small-text";
+          const playersNames = t.playerIds
+            .map((id) => players.find((p) => p.id === id))
+            .filter(Boolean)
+            .map((p) => p.name)
+            .join(", ");
+          spanPlayers.textContent =
+            " – " + (playersNames || "Sem jogadoras definidas");
+
+          header.appendChild(strong);
+          header.appendChild(spanPlayers);
+
+          const buttonsRow = document.createElement("div");
+          buttonsRow.className = "team-pill-buttons";
+
+          const editBtn = document.createElement("button");
+          editBtn.textContent = "Editar";
+          editBtn.className = "team-pill-button";
+          editBtn.addEventListener("click", () => startEditTeam(t));
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Excluir";
+          deleteBtn.className = "team-pill-button danger";
+          deleteBtn.addEventListener("click", () => deleteTeam(t.id));
+
+          buttonsRow.appendChild(editBtn);
+          buttonsRow.appendChild(deleteBtn);
+
+          container.appendChild(header);
+          container.appendChild(buttonsRow);
+
+          teamsListDiv.appendChild(container);
+        });
+      }
+
+      // Dropdowns da tela de placar
+      [teamASelect, teamBSelect].forEach((sel, idx) => {
+        const isA = idx === 0;
+        sel.innerHTML = "";
+        if (teams.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "Cadastre times primeiro";
+          sel.appendChild(opt);
+          sel.disabled = true;
+        } else {
+          sel.disabled = false;
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = isA
+            ? "Selecione o Time A"
+            : "Selecione o Time B";
+          sel.appendChild(placeholder);
+
+          teams.forEach((t) => {
+            const opt = document.createElement("option");
+            opt.value = t.id;
+            opt.textContent = t.name;
+            sel.appendChild(opt);
+          });
+        }
+      });
+
+      updateTeamNamesDisplay();
+      renderPlayersCheckboxes();
+      renderGoalsLists();
     }
-    const volSaved = localStorage.getItem('polo_vol');
-    if (volSaved !== null){ volEl.value = volSaved; }
-    setVolumeFromUI();
-    volEl.addEventListener('input', setVolumeFromUI);
 
-    // ===== Botões / Teclado =====
-    function isTypingTarget(el){ if(!el) return false; const t=el.tagName?.toLowerCase(); return t==='input'||t==='textarea'||el.isContentEditable; }
-    $('#aPlus').addEventListener('click', ()=>changeScore('A', +1));
-    $('#aMinus').addEventListener('click', ()=>changeScore('A', -1));
-    $('#bPlus').addEventListener('click', ()=>changeScore('B', +1));
-    $('#bMinus').addEventListener('click', ()=>changeScore('B', -1));
-    $('#plus30').addEventListener('click', ()=>changeTime(+15));
-    $('#minus30').addEventListener('click', ()=>changeTime(-15));
-    $('#toggle').addEventListener('click', toggle);
-    $('#reset').addEventListener('click', reset);
-    $('#finalize').addEventListener('click', ()=>{ openModal(); $('#resultsBox').open = true; });
-    document.getElementById('openHistory').addEventListener('click', openHistory);
-    document.getElementById('exportCSV').addEventListener('click', exportMatchesToCSV);
-    document.getElementById('clearAll').addEventListener('click', clearAllMatches);
+    // ========= AÇÕES: TIMES =========
+    function startEditTeam(team) {
+      editingTeamId = team.id;
+      teamNameInput.value = team.name;
 
-    window.addEventListener('keydown', e=>{
-      if(isTypingTarget(e.target)) return;
-      if(['F6','F7','F8','F9','F10','F11','F12'].includes(e.key) || (e.ctrlKey && e.key==='F12')) e.preventDefault();
-      if(e.key===' '){ e.preventDefault(); toggle(); }
-      else if(e.key==='r'||e.key==='R') reset();
-      else if(e.key==='[') changeTime(-15);
-      else if(e.key===']') changeTime(+15);
-      else if(e.key==='q'||e.key==='Q') changeScore('A', -1);
-      else if(e.key==='w'||e.key==='W') changeScore('A', +1);
-      else if(e.key==='o'||e.key==='O') changeScore('B', -1);
-      else if(e.key==='p'||e.key==='P') changeScore('B', +1);
-      else if(e.key==='1') jumpTo(20);
-      else if(e.key==='2') jumpTo(60);
-      else if(e.key==='3') jumpTo(120);
-      else if(e.key==='5') jumpTo(300);
-      else if(e.key==='0') jumpTo(600);
-    }, {passive:false});
+      playersCheckboxList
+        .querySelectorAll("input[type='checkbox']")
+        .forEach((cb) => {
+          cb.checked = team.playerIds.includes(cb.value);
+        });
 
-    // init
-    renderResults();
-    render();
-    requestAnimationFrame(tickByDeadline);
-
-    // registra o service worker (PWA)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(e=>console.warn('[SW]', e));
+      saveTeamBtn.textContent = "Salvar alterações do time";
+      showScreen("teams");
     }
+
+    function resetTeamForm() {
+      editingTeamId = null;
+      teamNameInput.value = "";
+      playersCheckboxList
+        .querySelectorAll("input[type='checkbox']")
+        .forEach((cb) => (cb.checked = false));
+      saveTeamBtn.textContent = "+ Criar time";
+    }
+
+    function deleteTeam(teamId) {
+      const team = teams.find((t) => t.id === teamId);
+      if (!team) return;
+      const ok = confirm(`Excluir o time "${team.name}"?`);
+      if (!ok) return;
+
+      teams = teams.filter((t) => t.id !== teamId);
+
+      if (teamASelect.value === teamId) teamASelect.value = "";
+      if (teamBSelect.value === teamId) teamBSelect.value = "";
+      if (editingTeamId === teamId) {
+        resetTeamForm();
+      }
+
+      saveToStorage();
+      renderTeams();
+    }
+
+    function handleSaveTeam() {
+      const name = teamNameInput.value.trim();
+      if (!name) return alert("Dê um nome para o time :)");
+
+      const selectedPlayerIds = Array.from(
+        playersCheckboxList.querySelectorAll("input[type='checkbox']:checked")
+      ).map((cb) => cb.value);
+
+      if (selectedPlayerIds.length === 0) {
+        const ok = confirm(
+          "Nenhuma jogadora selecionada. Criar/atualizar mesmo assim?"
+        );
+        if (!ok) return;
+      }
+
+      if (editingTeamId) {
+        const team = teams.find((t) => t.id === editingTeamId);
+        if (team) {
+          team.name = name;
+          team.playerIds = selectedPlayerIds;
+        }
+      } else {
+        const newTeam = {
+          id: generateId("t"),
+          name,
+          playerIds: selectedPlayerIds
+        };
+        teams.push(newTeam);
+      }
+
+      saveToStorage();
+      resetTeamForm();
+      renderTeams();
+    }
+
+    // ========= PLACAR / GOLS =========
+    function updateScoreDisplays() {
+      const teamA = teams.find((t) => t.id === teamASelect.value);
+      const teamB = teams.find((t) => t.id === teamBSelect.value);
+      scoreADisplay.textContent = getTeamScore(teamA);
+      scoreBDisplay.textContent = getTeamScore(teamB);
+    }
+
+    function updateCurrentGameInfo() {
+      const teamA = teams.find((t) => t.id === teamASelect.value);
+      const teamB = teams.find((t) => t.id === teamBSelect.value);
+      if (teamA && teamB) {
+        currentGameInfo.textContent = `Jogo: ${teamA.name} x ${teamB.name}`;
+      } else {
+        currentGameInfo.textContent =
+          "Escolha os dois times para começar o jogo.";
+      }
+    }
+
+    function updateTeamNamesDisplay() {
+      const teamA = teams.find((t) => t.id === teamASelect.value);
+      const teamB = teams.find((t) => t.id === teamBSelect.value);
+      teamANameDisplay.textContent = teamA ? teamA.name : "Time A";
+      teamBNameDisplay.textContent = teamB ? teamB.name : "Time B";
+      updateCurrentGameInfo();
+      renderGoalsLists();
+      updateScoreDisplays();
+    }
+
+    function adjustGoal(playerId, delta) {
+      if (!goals[playerId]) goals[playerId] = 0;
+      goals[playerId] = Math.max(0, goals[playerId] + delta);
+      renderGoalsLists();
+      updateScoreDisplays();
+    }
+
+    function renderGoalsForTeam(team, container) {
+      container.innerHTML = "";
+      if (!team) {
+        container.innerHTML =
+          "<p class='small-text'>Selecione o time acima.</p>";
+        return;
+      }
+      if (team.playerIds.length === 0) {
+        container.innerHTML =
+          "<p class='small-text'>Este time não tem jogadoras definidas.</p>";
+        return;
+      }
+
+      team.playerIds.forEach((id) => {
+        const player = players.find((p) => p.id === id);
+        if (!player) return;
+        const g = goals[id] || 0;
+
+        const item = document.createElement("div");
+        item.className = "goals-list-item";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "goals-player-name";
+        nameSpan.textContent = player.name;
+
+        const controls = document.createElement("div");
+        controls.className = "goals-player-controls";
+
+        const btnMinus = document.createElement("button");
+        btnMinus.textContent = "−";
+        btnMinus.addEventListener("click", () => adjustGoal(id, -1));
+
+        const scoreSpan = document.createElement("span");
+        scoreSpan.className = "goals-player-score";
+        scoreSpan.textContent = g;
+
+        const btnPlus = document.createElement("button");
+        btnPlus.textContent = "+";
+        btnPlus.addEventListener("click", () => adjustGoal(id, +1));
+
+        controls.appendChild(btnMinus);
+        controls.appendChild(scoreSpan);
+        controls.appendChild(btnPlus);
+
+        item.appendChild(nameSpan);
+        item.appendChild(controls);
+        container.appendChild(item);
+      });
+    }
+
+    function renderGoalsLists() {
+      const teamA = teams.find((t) => t.id === teamASelect.value);
+      const teamB = teams.find((t) => t.id === teamBSelect.value);
+      renderGoalsForTeam(teamA, goalsListA);
+      renderGoalsForTeam(teamB, goalsListB);
+      updateScoreDisplays();
+    }
+
+    function buildGoalsStringForTeam(team) {
+      if (!team) return "";
+      const parts = [];
+      team.playerIds.forEach((id) => {
+        const player = players.find((p) => p.id === id);
+        if (!player) return;
+        const g = goals[id] || 0;
+        if (g > 0) {
+          parts.push(`${player.name} (${g})`);
+        }
+      });
+      return parts.join("; ");
+    }
+
+    // ========= ENVIO PARA GOOGLE SHEETS =========
+    async function sendGameToSheets() {
+      setStatus("");
+
+      if (!GOOGLE_SCRIPT_URL) {
+        alert("URL do Google Apps Script não configurada.");
+        return;
+      }
+
+      const teamA = teams.find((t) => t.id === teamASelect.value);
+      const teamB = teams.find((t) => t.id === teamBSelect.value);
+
+      if (!teamA || !teamB) {
+        setStatus("Selecione os dois times antes de salvar o jogo.", "error");
+        return;
+      }
+
+      const scoreA = getTeamScore(teamA);
+      const scoreB = getTeamScore(teamB);
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("pt-BR");
+      const timeStr = now.toLocaleTimeString("pt-BR");
+
+      const playersA = teamA.playerIds
+        .map((id) => players.find((p) => p.id === id))
+        .filter(Boolean)
+        .map((p) => p.name);
+      const playersB = teamB.playerIds
+        .map((id) => players.find((p) => p.id === id))
+        .filter(Boolean)
+        .map((p) => p.name);
+
+      const goalsAString = buildGoalsStringForTeam(teamA);
+      const goalsBString = buildGoalsStringForTeam(teamB);
+
+      const gameData = {
+        date: dateStr,
+        time: timeStr,
+        teamA: teamA.name,
+        teamB: teamB.name,
+        scoreA,
+        scoreB,
+        playersA: playersA.join(", "),
+        playersB: playersB.join(", "),
+        goalsA: goalsAString,
+        goalsB: goalsBString
+      };
+
+      try {
+        setStatus("Enviando jogo para o Google Sheets...");
+
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(gameData)
+        });
+
+        // 🔴 NÃO reseta mais o placar/gols aqui
+        setStatus("Jogo salvo (requisição enviada).", "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus(
+          "Erro ao enviar o jogo. Verifique a conexão ou a URL do script.",
+          "error"
+        );
+      }
+    }
+
+    // ========= EVENTOS =========
+    function wireEvents() {
+      tabPlayers.addEventListener("click", () => showScreen("players"));
+      tabTeams.addEventListener("click", () => showScreen("teams"));
+      tabScore.addEventListener("click", () => showScreen("score"));
+
+      savePlayerBtn.addEventListener("click", handleSavePlayer);
+      playerNameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleSavePlayer();
+        }
+      });
+
+      saveTeamBtn.addEventListener("click", handleSaveTeam);
+
+      teamASelect.addEventListener("change", () => {
+        setStatus("");
+        updateTeamNamesDisplay();
+      });
+      teamBSelect.addEventListener("change", () => {
+        setStatus("");
+        updateTeamNamesDisplay();
+      });
+
+      resetScoreBtn.addEventListener("click", () => {
+        goals = {};
+        renderGoalsLists();
+        setStatus("Gols do jogo resetados.");
+      });
+
+      finishGameBtn.addEventListener("click", sendGameToSheets);
+    }
+
+    // ========= INIT =========
+    function init() {
+      loadFromStorage();
+      ensureDefaultPlayers();
+      renderPlayers();
+      renderTeams();
+      renderGoalsLists();
+      wireEvents();
+    }
+
+    init();
   </script>
 </body>
 </html>
